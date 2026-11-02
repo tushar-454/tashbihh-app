@@ -1,0 +1,11 @@
+Performing Streamed Install
+Success
+
+
+Starting: Intent { cmp=com.example.tashbihh/.MainActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.example.tashbihh/.MainActivity
+TotalTime: 10675
+WaitTime: 10706
+Complete

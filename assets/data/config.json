@@ -1,0 +1,199 @@
+{
+  "prayers": [
+    {
+      "id": "fajr",
+      "label": "Fajr",
+      "arabic": "الفجر",
+      "icon": "🌅"
+    },
+    {
+      "id": "dhuhr",
+      "label": "Dhuhr",
+      "arabic": "الظهر",
+      "icon": "☀️"
+    },
+    {
+      "id": "asr",
+      "label": "Asr",
+      "arabic": "العصر",
+      "icon": "🌤️"
+    },
+    {
+      "id": "maghrib",
+      "label": "Maghrib",
+      "arabic": "المغرب",
+      "icon": "🌇"
+    },
+    {
+      "id": "isha",
+      "label": "Isha",
+      "arabic": "العشاء",
+      "icon": "🌙"
+    }
+  ],
+  "duas": [
+    {
+      "id": "subhanallah",
+      "arabic": "سُبْحَانَ اللَّهِ",
+      "transliteration": "SubhanAllah",
+      "meaning": "Glory be to Allah",
+      "target": 33,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "alhamdulillah",
+      "arabic": "الْحَمْدُ لِلَّهِ",
+      "transliteration": "Alhamdulillah",
+      "meaning": "All praise is due to Allah",
+      "target": 33,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "allahuakbar",
+      "arabic": "اللَّهُ أَكْبَرُ",
+      "transliteration": "Allahu Akbar",
+      "meaning": "Allah is the Greatest",
+      "target": 34,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "lailahaillallah",
+      "arabic": "لَا إِلَهَ إِلَّا اللَّهُ",
+      "transliteration": "La ilaha illallah",
+      "meaning": "There is no god but Allah",
+      "target": 100,
+      "prayer": [
+        "fajr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "astaghfirullah",
+      "arabic": "أَسْتَغْفِرُ اللَّهَ",
+      "transliteration": "Astaghfirullah",
+      "meaning": "I seek forgiveness from Allah",
+      "target": 33,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "lahawla",
+      "arabic": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+      "transliteration": "La hawla wa la quwwata illa billah",
+      "meaning": "There is no power nor strength except with Allah",
+      "target": 33,
+      "prayer": [
+        "fajr",
+        "isha"
+      ]
+    },
+    {
+      "id": "ayatulkursi",
+      "arabic": "آية الكرسي",
+      "transliteration": "Ayatul Kursi",
+      "meaning": "The Throne Verse (recite once)",
+      "target": 1,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "sayyidulistighfar",
+      "arabic": "سيد الاستغفار",
+      "transliteration": "Sayyidul Istighfar",
+      "meaning": "Master supplication for forgiveness",
+      "target": 3,
+      "prayer": [
+        "fajr",
+        "maghrib"
+      ]
+    },
+    {
+      "id": "durood",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
+      "transliteration": "Allahumma salli ala Muhammad",
+      "meaning": "Send blessings upon Muhammad ﷺ",
+      "target": 10,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    {
+      "id": "subhanallahi_wabihamdihi",
+      "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+      "transliteration": "SubhanAllahi wa bihamdihi",
+      "meaning": "Glory and praise be to Allah",
+      "target": 100,
+      "prayer": [
+        "fajr",
+        "isha"
+      ]
+    },
+    {
+      "id": "allahumma_inni_asalukal_afiyah",
+      "arabic": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ",
+      "transliteration": "Allah Humma Inni As'alukal Afiyah",
+      "meaning": "O Allah, I ask You for well-being",
+      "target": 10,
+      "prayer": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    }
+  ],
+  "APP_STORAGE_KEY": "tasbih-progress",
+  "SETTINGS_STORAGE_KEY": "tasbih-settings",
+  "PRAYER_ORDER": [
+    "fajr",
+    "dhuhr",
+    "asr",
+    "maghrib",
+    "isha"
+  ],
+  "fajrTimeStart": "04:45",
+  "fajrTimeEnd": "06:00",
+  "dhuhrTimeStart": "12:00",
+  "dhuhrTimeEnd": "15:00",
+  "asrTimeStart": "16:45",
+  "asrTimeEnd": "18:00",
+  "maghribTimeStart": "18:45",
+  "maghribTimeEnd": "20:00",
+  "ishaTimeStart": "20:30",
+  "ishaTimeEnd": "22:00",
+  "MIN_COMPLETED_DUAS_PER_PRAYER_FOR_STREAK": 3
+}

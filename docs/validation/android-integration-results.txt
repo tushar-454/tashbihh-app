@@ -1,0 +1,15 @@
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+I/flutter ( 4203): 00:00 +0: native prayer, custom, fullscreen, disk restart and confirmed reset workflow
+I/flutter ( 4203): INTEGRATION: load config
+I/flutter ( 4203): INTEGRATION: load preferences
+I/flutter ( 4203): INTEGRATION: initialize platform
+I/flutter ( 4203): INTEGRATION: platform ready
+I/flutter ( 4203): INTEGRATION: mount app
+I/flutter ( 4203): INTEGRATION: mount app
+I/flutter ( 4203): INTEGRATION: initialize platform
+I/flutter ( 4203): INTEGRATION: platform ready
+I/flutter ( 4203): INTEGRATION: mount app
+I/flutter ( 4203): INTEGRATION: mount app
+I/flutter ( 4203): 00:32 +1: (tearDownAll)
+I/flutter ( 4203): 00:32 +2: All tests passed!
+All tests passed.

@@ -1,0 +1,15 @@
+✓ Built build/linux/x64/debug/bundle/tashbihh
+00:00 +0: native prayer, custom, fullscreen, disk restart and confirmed reset workflow
+INTEGRATION: load config
+INTEGRATION: load preferences
+INTEGRATION: initialize platform
+INTEGRATION: platform ready
+INTEGRATION: mount app
+INTEGRATION: mount app
+INTEGRATION: initialize platform
+INTEGRATION: platform ready
+INTEGRATION: mount app
+INTEGRATION: mount app
+00:09 +1: (tearDownAll)
+00:09 +2: All tests passed!
+All tests passed.

@@ -1,0 +1,8 @@
+{
+  "timezone": "Asia/Dhaka",
+  "defaultLocalTime": "2026-11-02 11:00",
+  "partialLocalTime": "2026-11-02 05:00",
+  "blockedLocalTime": "2026-11-02 07:00",
+  "source": "https://tashbihh.vercel.app/",
+  "sourceCenterSingleTapBug": true
+}

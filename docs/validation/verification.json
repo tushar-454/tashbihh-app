@@ -1,0 +1,47 @@
+{
+  "sdk": "Flutter 3.47.9 / Dart 3.13.7",
+  "date": "2026-11-02",
+  "format": "24 Dart files; passed",
+  "analysis": "No issues found",
+  "tests": 44,
+  "android_integration": "Passed on emulator-5554, API37",
+  "linux_integration": "Passed with real platform storage and fullscreen",
+  "chrome": {
+    "errors": [],
+    "remoteRequests": [],
+    "offlineReload": true,
+    "singleTapCount": 1,
+    "doubleTapCount": 0,
+    "restoredMode": "custom",
+    "restoredStyle": "modern",
+    "restoredCount": 0
+  },
+  "untested": [
+    "iOS native",
+    "macOS native",
+    "Windows native",
+    "physical haptic equivalence"
+  ],
+  "signing": "Android starter debug key; production keystore not supplied",
+  "apk": {
+    "path": "build/app/outputs/flutter-apk/app-release.apk",
+    "bytes": 50707945,
+    "sha256": "07cda7a0c484635134499f35dc161d4a3ab2e284a86e506babfeb433f9178b99",
+    "mode": "release",
+    "signing": "starter debug key",
+    "abis": [
+      "armeabi-v7a",
+      "arm64-v8a",
+      "x86_64"
+    ]
+  },
+  "source_checkout_unchanged": true,
+  "linux_release": "build/linux/x64/release/bundle/tashbihh",
+  "web_release": "build/web; 50 local cached files",
+  "streak_day_difference": "Exact JavaScript floor of local-midnight elapsed milliseconds, including DST",
+  "dst_timezone_tests": {
+    "timezone": "America/New_York",
+    "passed": 32
+  },
+  "final_apk_device_reinstall": "Passed: exact final APK installed; Status ok, LaunchState COLD on emulator-5554"
+}

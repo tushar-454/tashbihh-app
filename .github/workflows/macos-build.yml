@@ -1,0 +1,41 @@
+name: Build macOS DMG
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build:
+        runs-on: macos-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Flutter
+              uses: subosito/flutter-action@v2
+              with:
+                  channel: stable
+
+            - name: Install dependencies
+              run: flutter pub get
+
+            - name: Build macOS app
+              run: flutter build macos --release
+
+            - name: Create DMG
+              run: |
+                  mkdir -p dmg-content
+                  cp -R build/macos/Build/Products/Release/*.app dmg-content/
+                  ln -s /Applications dmg-content/Applications
+                  hdiutil create \
+                    -volname "Tasbih" \
+                    -srcfolder dmg-content \
+                    -ov \
+                    -format UDZO \
+                    Tasbih-macOS.dmg
+
+            - name: Upload DMG
+              uses: actions/upload-artifact@v4
+              with:
+                  name: Tasbih-macOS
+                  path: Tasbih-macOS.dmg

@@ -1,0 +1,26 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const fs=require('node:fs');
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROME_BIN||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
+ const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Dhaka',deviceScaleFactor:1});
+ const page=await context.newPage();await page.clock.install({time:new Date('2026-11-02T05:00:00Z')});
+ await page.goto('https://tashbihh.vercel.app/',{waitUntil:'networkidle'});
+ await page.evaluate(()=>document.fonts.ready);
+ const capture=async name=>{await page.clock.runFor(800);await page.screenshot({path:`docs/validation/source-${name}.png`});};
+ const time=async iso=>{await page.clock.setSystemTime(new Date(iso));await page.clock.runFor(30001);};
+ await capture('default');
+ await page.click('#duaButton');await capture('dua-menu');await page.click('#duaButton');
+ await time('2026-11-01T23:00:00Z');
+ for(let i=0;i<3;i++)await page.mouse.click(10,300);await capture('classic-partial');
+ await page.click('#duaButton');await page.locator('.dua-item').filter({hasText:'Ayatul Kursi'}).click();await page.mouse.click(10,300);await capture('completed');
+ await time('2026-11-02T01:00:00Z');await page.locator('.prayer-btn').filter({hasText:'Dhuhr'}).click();await capture('blocked-prayer');
+ await page.click('#settingsToggle');await capture('settings');
+ await page.click('#modeToggle');await capture('custom');
+ await page.click('#styleToggle');await page.click('#settingsToggle');
+ for(let i=0;i<25;i++)await page.mouse.click(10,300);await capture('modern-partial');
+ await page.click('#settingsToggle');await page.click('#resetAllButton');await capture('reset');await page.click('#resetCancelButton');
+ await page.setViewportSize({width:280,height:568});await capture('narrow');
+ await page.setViewportSize({width:1440,height:900});await capture('large');
+ fs.writeFileSync('docs/validation/source-fixtures.json',JSON.stringify({timezone:'Asia/Dhaka',defaultLocalTime:'2026-11-02 11:00',partialLocalTime:'2026-11-02 05:00',blockedLocalTime:'2026-11-02 07:00',source:'https://tashbihh.vercel.app/',sourceCenterSingleTapBug:true},null,2));
+ console.log('Captured 11 deterministic live source states.');await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -1,0 +1,42 @@
+{
+  "index.html": {
+    "sha256": "7cde5acc08194319dbfc60914598a3422c6202879062456bc7270571549a16ec",
+    "matches_local": true
+  },
+  "styles.css": {
+    "sha256": "75de8f71e71124a8aff9a00696d7ad30cce6bc9ee94a958dcb9a2fed75e4a58c",
+    "matches_local": true
+  },
+  "script.js": {
+    "sha256": "63a463b82c9466309f53753636b5318d13bd1611ca33ad761b205e4b65b7c467",
+    "matches_local": true
+  },
+  "config.js": {
+    "sha256": "62a1ed60718584d2f47aa16f94528bfbfe1ae63ebdd121e88cd1e19ef22d58da",
+    "matches_local": true
+  },
+  "project-overview.md": {
+    "sha256": "18e68f0e1446328708fda46cc269bf64c714316ba3629bfe9ade5c0a3b6fcc93",
+    "matches_local": true
+  },
+  "readme.md": {
+    "sha256": "0403cc574605df156367863d429edbe01c5be52153d88af0d5ad476933bee033",
+    "matches_local": true
+  },
+  "icon.svg": {
+    "sha256": "83273d2db66ecad975161d293d96844922767ed2b3e532babe7b9f46b7727eaf",
+    "matches_local": true
+  },
+  "icon-maskable.svg": {
+    "sha256": "14e219ea5fc660afac43b1bed301129ac97130d64706ea031cea704856fdb5d4",
+    "matches_local": true
+  },
+  "manifest.webmanifest": {
+    "sha256": "e956a7154c7c410b2221edc860157fc58c25f8b92c33859bc74f31ba22cf4c81",
+    "matches_local": true
+  },
+  "sw.js": {
+    "sha256": "0590fbadc1dd312110f5f3b64ad2b259b292702ef38a57d0adc690d16a4b6403",
+    "matches_local": true
+  }
+}
