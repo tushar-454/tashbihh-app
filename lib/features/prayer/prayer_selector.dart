@@ -26,16 +26,19 @@ class PrayerSelector extends StatelessWidget {
     final p = c.config.prayers[index];
     final selected = c.state.selectedPrayer == p.id;
     final enabled = c.canSelect(p.id);
-    final locked = p.isLocked(c.now);
+    final locked = c.config.schedule.ended(p.id, c.now);
+    final status = c.config.schedule.eligible(p.id, c.now)
+        ? 'Available now'
+        : 'Not available at this time';
     return Tooltip(
       message:
-          '${p.label} · ${p.arabic}\n${p.windowLabel}${locked ? ' · Locked' : ''}',
+          '${p.label} · ${p.arabic}\n${p.windowLabel} · $status${locked ? ' · Locked' : ''}',
       child: Semantics(
         selected: selected,
         button: true,
         enabled: enabled,
         label:
-            '${p.label}, ${p.arabic}, ${p.windowLabel}${locked ? ', locked' : ''}',
+            '${p.label}, ${p.arabic}, ${p.windowLabel}, $status${locked ? ', locked' : ''}',
         excludeSemantics: true,
         child: Opacity(
           opacity: enabled ? 1 : .45,

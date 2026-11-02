@@ -1,0 +1,29 @@
+Tapped: Reset all data
+Tapped: Delete
+Set device timezone: Etc/UTC
+Set device clock: 2026-11-02T04:45:00+00:00
+PASS: Fajr local-clock activation and actual counting
+Set device clock: 2026-11-02T12:00:00+00:00
+PASS: Dhuhr local-clock activation and actual counting
+Set device clock: 2026-11-02T16:45:00+00:00
+PASS: Asr local-clock activation and actual counting
+Set device clock: 2026-11-02T18:45:00+00:00
+PASS: Maghrib local-clock activation and actual counting
+Set device clock: 2026-11-02T20:30:00+00:00
+PASS: Isha local-clock activation and actual counting
+Set device clock: 2026-11-02T15:00:00+00:00
+PASS: actual counter tap blocked after time moves outside all windows
+Set device clock: 2026-11-02T12:00:00+00:00
+Set device timezone: America/Los_Angeles
+Set device timezone: Etc/UTC
+PASS: live Android timezone broadcasts refresh availability
+Set device clock: 2026-11-02T20:30:00+00:00
+Warning: Activity not started, its current task has been brought to the front
+PASS: resume after time change selects current eligible prayer
+Set device clock: 2026-11-02T23:59:57+00:00
+PASS: foreground midnight rollover clears daily prayer counts
+Tapped: Settings
+Tapped: Custom Mode
+PASS: Custom Mode counts during midnight inactive interval
+ALL ANDROID PRAYER ACCEPTANCE CHECKS PASSED
+Set device timezone: Asia/Dhaka

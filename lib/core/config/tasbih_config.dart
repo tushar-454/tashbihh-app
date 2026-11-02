@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import '../time/prayer_schedule.dart';
+
 class PrayerDefinition {
   const PrayerDefinition({
     required this.id,
@@ -43,10 +45,16 @@ class TasbihConfig {
     required this.prayers,
     required this.duas,
     required this.minimumStreakDuas,
+    this.prayerEndGraceMinutes = 0,
   });
   final List<PrayerDefinition> prayers;
   final List<Dhikr> duas;
   final int minimumStreakDuas;
+  final int prayerEndGraceMinutes;
+  late final schedule = PrayerSchedule(
+    prayers,
+    endGraceMinutes: prayerEndGraceMinutes,
+  );
   factory TasbihConfig.fromJson(Map<String, dynamic> json) {
     int minutes(String value) {
       final parts = value.split(':').map(int.parse).toList();
@@ -79,6 +87,7 @@ class TasbihConfig {
           )
           .toList(),
       minimumStreakDuas: json['MIN_COMPLETED_DUAS_PER_PRAYER_FOR_STREAK'],
+      prayerEndGraceMinutes: json['prayerEndGraceMinutes'] as int? ?? 0,
     );
   }
   static Future<TasbihConfig> load() async => TasbihConfig.fromJson(
@@ -87,12 +96,7 @@ class TasbihConfig {
   );
   List<Dhikr> forPrayer(String id) =>
       duas.where((d) => d.prayers.contains(id)).toList();
-  String? activePrayer(DateTime date) {
-    for (final prayer in prayers) {
-      if (prayer.isOpen(date)) return prayer.id;
-    }
-    return null;
-  }
+  String? activePrayer(DateTime date) => schedule.activePrayer(date);
 
   PrayerDefinition prayer(String id) => prayers.firstWhere((p) => p.id == id);
 }

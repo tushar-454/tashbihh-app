@@ -1,0 +1,236 @@
+{
+  "before": {
+    "format": "tasbih_backup",
+    "schemaVersion": 1,
+    "exportedAt": "2026-11-02T12:42:44.343523Z",
+    "appVersion": "1.0.0",
+    "data": {
+      "state": {
+        "date": "2026-11-02",
+        "selectedPrayer": "fajr",
+        "prayers": {
+          "fajr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "lahawla": 0,
+              "ayatulkursi": 0,
+              "sayyidulistighfar": 0,
+              "durood": 0,
+              "subhanallahi_wabihamdihi": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "dhuhr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "asr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "maghrib": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "sayyidulistighfar": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "isha": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "lahawla": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "subhanallahi_wabihamdihi": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          }
+        },
+        "customCount": 13,
+        "customTarget": 240,
+        "streak": 4,
+        "lastStreakDate": "2026-11-02"
+      },
+      "settings": {
+        "vibrationIntensity": 75,
+        "mode": "custom",
+        "style": "modern"
+      }
+    }
+  },
+  "after": {
+    "format": "tasbih_backup",
+    "schemaVersion": 1,
+    "exportedAt": "2026-11-02T12:44:51.815495Z",
+    "appVersion": "1.0.0",
+    "data": {
+      "state": {
+        "date": "2026-11-02",
+        "selectedPrayer": "fajr",
+        "prayers": {
+          "fajr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "lahawla": 0,
+              "ayatulkursi": 0,
+              "sayyidulistighfar": 0,
+              "durood": 0,
+              "subhanallahi_wabihamdihi": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "dhuhr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "asr": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "maghrib": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "ayatulkursi": 0,
+              "sayyidulistighfar": 0,
+              "durood": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          },
+          "isha": {
+            "selectedDuaId": "subhanallah",
+            "counts": {
+              "subhanallah": 33,
+              "alhamdulillah": 33,
+              "allahuakbar": 34,
+              "lailahaillallah": 0,
+              "astaghfirullah": 0,
+              "lahawla": 0,
+              "ayatulkursi": 0,
+              "durood": 0,
+              "subhanallahi_wabihamdihi": 0,
+              "allahumma_inni_asalukal_afiyah": 0
+            },
+            "completed": [
+              "subhanallah",
+              "alhamdulillah",
+              "allahuakbar"
+            ]
+          }
+        },
+        "customCount": 13,
+        "customTarget": 240,
+        "streak": 4,
+        "lastStreakDate": "2026-11-02"
+      },
+      "settings": {
+        "vibrationIntensity": 75,
+        "mode": "custom",
+        "style": "modern"
+      }
+    }
+  }
+}

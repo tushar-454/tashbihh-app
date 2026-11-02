@@ -11,10 +11,15 @@ class SettingsPanel extends StatelessWidget {
     required this.controller,
     required this.device,
     required this.onReset,
+    required this.onExport,
+    required this.onImport,
+    this.backupBusy = false,
+    this.backupLoading = false,
   });
   final CounterController controller;
   final DeviceServices device;
-  final VoidCallback onReset;
+  final VoidCallback onReset, onExport, onImport;
+  final bool backupBusy, backupLoading;
   @override
   Widget build(BuildContext context) {
     final c = controller;
@@ -113,6 +118,42 @@ class SettingsPanel extends StatelessWidget {
                   onPressed: device.toggleFullscreen,
                 ),
               ),
+              _group(
+                'Backup & Restore',
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SettingsAction(
+                      key: const Key('export-backup'),
+                      label: 'Export Backup',
+                      onPressed: backupBusy ? null : onExport,
+                    ),
+                    const SizedBox(height: 5.6),
+                    _label('Save your progress and settings as a JSON file.'),
+                    const SizedBox(height: 9.6),
+                    SettingsAction(
+                      key: const Key('import-backup'),
+                      label: 'Import Backup',
+                      onPressed: backupBusy ? null : onImport,
+                    ),
+                    const SizedBox(height: 5.6),
+                    _label(
+                      'Restore your progress and settings from a saved backup.',
+                    ),
+                    if (backupLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 13.6),
               SettingsAction(
                 key: const Key('reset-all'),
@@ -146,7 +187,7 @@ class SettingsAction extends StatelessWidget {
     this.danger = false,
   });
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool danger;
   @override
   Widget build(BuildContext context) => OutlinedButton(

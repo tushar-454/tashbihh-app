@@ -53,5 +53,24 @@ class ProgressRepository {
     'state': state.toJson(),
     'settings': settings.toJson(),
   });
+
+  /// One native preference key is the commit unit. Restore the prior snapshot
+  /// on a reported failure (including the SharedPreferences in-memory cache).
+  Future<void> replace(String snapshot, String fallback) async {
+    final previous = await store.read() ?? fallback;
+    try {
+      await store.write(snapshot);
+    } catch (_) {
+      try {
+        await store.write(previous);
+      } catch (_) {
+        throw StateError(
+          'Restore failed and storage recovery could not be verified. Your active data is unchanged. Free storage and restart before trying again.',
+        );
+      }
+      rethrow;
+    }
+  }
+
   Future<void> save(String snapshot) => store.write(snapshot);
 }

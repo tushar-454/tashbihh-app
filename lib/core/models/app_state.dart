@@ -99,11 +99,15 @@ class AppState {
     this.customTarget = 100,
     this.streak = 0,
     this.lastStreakDate,
+    this.restoredDay,
   });
   String date, selectedPrayer;
   Map<String, PrayerProgress> prayers;
   int customCount, customTarget, streak;
   String? lastStreakDate;
+
+  /// Original dated prayer/streak record from the last historical restore.
+  Map<String, dynamic>? restoredDay;
   static Map<String, PrayerProgress> emptyPrayers(TasbihConfig config) => {
     for (final p in config.prayers) p.id: PrayerProgress.empty(config, p.id),
   };
@@ -120,6 +124,9 @@ class AppState {
     final lastDate = json['lastStreakDate'];
     return AppState(
       date: date,
+      restoredDay: json['restoredDay'] is Map
+          ? Map<String, dynamic>.from(json['restoredDay'])
+          : null,
       selectedPrayer: config.prayers.any((p) => p.id == json['selectedPrayer'])
           ? json['selectedPrayer'] as String
           : 'fajr',
@@ -149,5 +156,6 @@ class AppState {
     'customTarget': customTarget,
     'streak': streak,
     'lastStreakDate': lastStreakDate,
+    if (restoredDay != null) 'restoredDay': restoredDay,
   };
 }

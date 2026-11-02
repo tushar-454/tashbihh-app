@@ -1,0 +1,49 @@
+Warning: Activity not started, intent has been delivered to currently running top-most instance.
+Tapped: Settings
+Tapped: Import Backup
+ERROR: null root node returned by UiTestAutomationBridge.
+Tapped: Show roots
+Tapped: Downloads
+Tapped: tasbih-device-seed.json
+Preview includes: ['Backup: 2026-11-02 18:39:13.099688\nPrayer progress date: 2026-11-02\nFajr: 100 counts, 3 completed\nDhuhr: 100 counts, 3 completed\nAsr: 100 counts, 3 completed\nMaghrib: 100 counts, 3 completed\nIsha: 100 counts, 3 completed\n\nStreak: 4 · Last successful day: 2026-11-02\nCustom Mode: 12 / 240\nSettings: custom mode, modern counter, vibration 75ms.\n\nOlder prayer progress stays attached to its original date. Today’s counters and streak follow daily reset rules.\n\nRestoring this backup will replace your current saved progress and settings.']
+Tapped: Cancel
+PASS: confirmation cancellation kept original settings
+Tapped: Import Backup
+ERROR: null root node returned by UiTestAutomationBridge.
+Tapped: tasbih-device-seed.json
+Tapped: Restore
+PASS: real ACTION_OPEN_DOCUMENT import restored previewed settings
+Tapped: Settings
+Tapped: Export Backup
+ERROR: null root node returned by UiTestAutomationBridge.
+Traceback (most recent call last):
+  File "/tmp/tasbih_device_e2e.py", line 71, in <module>
+    filename=export_file()
+  File "/tmp/tasbih_device_e2e.py", line 55, in export_file
+    tap('Save');wait('Backup saved successfully.')
+    ~~~^^^^^^^^
+  File "/tmp/tasbih_device_e2e.py", line 17, in tap
+    r=wait(query)
+  File "/tmp/tasbih_device_e2e.py", line 15, in wait
+    raise RuntimeError('Timed out: '+query+' '+str(texts(r)))
+RuntimeError: Timed out: Save ['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Downloads', '', 'Files in Downloads', '', 'List view', '', 'Show roots', 'Downloads', '', 'New folder', 'More options', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'tasbih-device-seed.json', '1.89 kB', '6:39\u202fPM', '', '', '', '', '', 'tasbih-backup-2026-11-02-18-42.json', '', 'SAVE']
+Tapped: SAVE
+PASS: wrote backup through ACTION_CREATE_DOCUMENT
+PASS: exported actual changed counts, all prayer completions, streak and settings to Downloads
+PASS: exported JSON survived app uninstall
+PASS: reinstall starts with empty app data
+Tapped: Settings
+Tapped: Import Backup
+ERROR: null root node returned by UiTestAutomationBridge.
+Tapped: tasbih-backup-2026-11-02-18-42.json
+Preview includes: ['Backup: 2026-11-02 18:42:44.343523\nPrayer progress date: 2026-11-02\nFajr: 100 counts, 3 completed\nDhuhr: 100 counts, 3 completed\nAsr: 100 counts, 3 completed\nMaghrib: 100 counts, 3 completed\nIsha: 100 counts, 3 completed\n\nStreak: 4 · Last successful day: 2026-11-02\nCustom Mode: 13 / 240\nSettings: custom mode, modern counter, vibration 75ms.\n\nOlder prayer progress stays attached to its original date. Today’s counters and streak follow daily reset rules.\n\nRestoring this backup will replace your current saved progress and settings.']
+Tapped: Restore
+Tapped: Settings
+ERROR: null root node returned by UiTestAutomationBridge.
+Tapped: Settings
+Tapped: Export Backup
+ERROR: null root node returned by UiTestAutomationBridge.
+Tapped: SAVE
+Exported: tasbih-backup-2026-11-02-18-44.json
+PASS: reinstall + import + cold restart + re-export preserves complete data equivalently
+ALL ANDROID BACKUP ACCEPTANCE CHECKS PASSED

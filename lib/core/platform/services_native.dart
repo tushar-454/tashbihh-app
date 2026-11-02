@@ -10,6 +10,13 @@ import 'device_services.dart';
 DeviceServices createDeviceServices() => NativeDeviceServices();
 
 class NativeDeviceServices extends DeviceServices with WindowListener {
+  @override
+  Stream<void> get clockChanges =>
+      defaultTargetPlatform == TargetPlatform.android
+      ? const EventChannel('tasbih/local_clock')
+            .receiveBroadcastStream()
+            .map((_) {})
+      : const Stream.empty();
   bool _fullscreen = false;
   bool _hasVibrator = false;
   Timer? _completion;

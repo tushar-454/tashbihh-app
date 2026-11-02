@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -26,6 +27,15 @@ class MemoryStore implements SnapshotStore {
 }
 
 class TestDevice extends DeviceServices {
+  final clockEvents = StreamController<void>.broadcast();
+  @override
+  Stream<void> get clockChanges => clockEvents.stream;
+  @override
+  void dispose() {
+    clockEvents.close();
+    super.dispose();
+  }
+
   bool full = false;
   int taps = 0;
   @override

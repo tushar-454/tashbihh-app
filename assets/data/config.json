@@ -195,5 +195,6 @@
   "maghribTimeEnd": "20:00",
   "ishaTimeStart": "20:30",
   "ishaTimeEnd": "22:00",
+  "prayerEndGraceMinutes": 0,
   "MIN_COMPLETED_DUAS_PER_PRAYER_FOR_STREAK": 3
 }

@@ -1,0 +1,94 @@
+00:00 +0: loading /home/tushar/development/tashbihh/test/backup_test.dart
+00:00 +0: /home/tushar/development/tashbihh/test/domain_test.dart: complete authoritative dataset and prayer eligibility
+00:00 +1: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +2: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +3: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +4: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +5: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +6: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +7: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +8: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +9: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +10: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +11: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +12: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +13: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +14: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +15: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +16: /home/tushar/development/tashbihh/test/domain_test.dart: streak success requires three completed Duas in each prayer
+00:00 +17: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +18: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +19: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +20: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +21: /home/tushar/development/tashbihh/test/domain_test.dart: consecutive successful days increment streak
+00:01 +22: /home/tushar/development/tashbihh/test/backup_test.dart: restore 1-day-old backup retains history and uses existing daily rules
+00:01 +23: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:01 +24: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:01 +25: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:01 +26: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:01 +27: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +28: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +29: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +30: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +31: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +32: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +33: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +34: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +35: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +36: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +37: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +38: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +39: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +40: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +41: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +42: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +43: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +44: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +45: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +46: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +47: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +48: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +49: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +50: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:02 +51: /home/tushar/development/tashbihh/test/backup_test.dart: candidate is detached from preview mutations
+00:02 +52: /home/tushar/development/tashbihh/test/domain_test.dart: unfinished day breaks streak at next midnight
+00:02 +53: /home/tushar/development/tashbihh/test/domain_test.dart: unfinished day breaks streak at next midnight
+00:02 +54: /home/tushar/development/tashbihh/test/domain_test.dart: unfinished day breaks streak at next midnight
+00:04 +55: /home/tushar/development/tashbihh/test/domain_test.dart: local midnight arithmetic handles year/month/leap-day boundaries
+00:04 +56: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:04 +57: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:04 +58: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:04 +59: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +60: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +61: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +62: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +63: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +64: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:05 +65: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:11 +66: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:12 +67: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:13 +68: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:13 +69: /home/tushar/development/tashbihh/test/widget_test.dart: blocked window, prayer selection restrictions, boundary update and midnight
+00:13 +70: /home/tushar/development/tashbihh/test/widget_test.dart: blocked window, prayer selection restrictions, boundary update and midnight
+00:13 +71: /home/tushar/development/tashbihh/test/widget_test.dart: blocked window, prayer selection restrictions, boundary update and midnight
+00:13 +72: /home/tushar/development/tashbihh/test/widget_test.dart: blocked window, prayer selection restrictions, boundary update and midnight
+00:13 +73: /home/tushar/development/tashbihh/test/widget_test.dart: blocked window, prayer selection restrictions, boundary update and midnight
+00:14 +74: /home/tushar/development/tashbihh/test/widget_test.dart: reset requires confirmation; cancel preserves; delete restores defaults
+00:15 +75: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings actions export complete JSON with suggested filename and success
+00:16 +76: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings actions export complete JSON with suggested filename and success
+00:17 +77: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings actions export complete JSON with suggested filename and success
+00:18 +78: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings actions export complete JSON with suggested filename and success
+00:18 +79: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings actions export complete JSON with suggested filename and success
+00:19 +80: /home/tushar/development/tashbihh/test/widget_test.dart: responsive main, dropdown, settings and dialog 1440.0x900.0
+00:19 +81: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: export cancellation has no success notification
+00:19 +82: /home/tushar/development/tashbihh/test/widget_test.dart: 200 percent text scale remains scrollable and usable
+00:20 +83: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: success waits for provider write completion and shows loading
+00:20 +84: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: export provider error displays failure
+00:21 +85: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: picker cancellation preserves complete state and disk
+00:21 +86: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:22 +87: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:23 +88: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:24 +89: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:25 +90: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:25 +91: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:26 +92: All tests passed!
