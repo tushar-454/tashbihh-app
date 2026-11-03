@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: read
+      pages: write
     steps:
       - name: Check out website
         uses: actions/checkout@v6
@@ -31,6 +31,8 @@ jobs:
           sparse-checkout: website
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Upload website only
         uses: actions/upload-pages-artifact@v4
         with:
