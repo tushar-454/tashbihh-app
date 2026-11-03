@@ -6,6 +6,13 @@ Android automatically synchronizes local prayer times once per day while the app
 is open, with persistent caching and the existing JSON schedule as its offline
 fallback. See [prayer-time behavior and implementation](docs/prayer-times.md).
 
+On Android, **Backup/Restore** connects Google Drive, automatically restores an
+existing private backup, and backs up immediately on subsequent taps. Changed
+progress is also backed up when due every 12 hours while the app is active, with
+an overdue check on startup/resume. Reset Everything coordinates local and cloud
+deletion. See [backup behavior, recovery, and device checks](docs/google-drive-backup.md),
+including the foreground-only scheduling limitation.
+
 ```sh
 flutter pub get
 flutter run -d emulator-5554  # Android

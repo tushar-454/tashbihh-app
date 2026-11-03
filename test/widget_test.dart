@@ -9,10 +9,6 @@ import 'test_support.dart';
 void main() {
   late Harness h;
   late TestDevice device;
-  setUp(() {
-    h = Harness();
-    device = TestDevice();
-  });
   tearDown(() {
     h.controller.dispose();
     device.dispose();
@@ -22,6 +18,9 @@ void main() {
     Size size = const Size(390, 844),
     double scale = 1,
   }) async {
+    // Create asynchronous storage fixtures in the widget test clock zone.
+    h = Harness();
+    device = TestDevice();
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -154,7 +153,7 @@ void main() {
     },
   );
   testWidgets(
-    'reset requires confirmation; cancel preserves; delete restores defaults',
+    'reset requires confirmation; cancel preserves; Reset Everything restores defaults',
     (tester) async {
       await launch(tester);
       await countTap(tester);

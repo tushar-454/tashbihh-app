@@ -1,65 +1,44 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tashbihh/app/app.dart';
-import 'package:tashbihh/core/backup/backup_service.dart';
-import 'package:tashbihh/core/platform/backup_documents.dart';
+import 'package:tashbihh/core/backup/cloud_backup_coordinator.dart';
 
+import 'cloud_backup_support.dart';
 import 'test_support.dart';
 
 void main() {
   late Harness h;
   late TestDevice device;
-  Uint8List? selected;
-  bool exportResult = true;
-  bool fileError = false;
-  Map<dynamic, dynamic>? exported;
-  Completer<bool>? pendingExport;
-  void initialize() {
-    h = Harness();
-    device = TestDevice();
-    selected = null;
-    exported = null;
-    pendingExport = null;
-    exportResult = true;
-    fileError = false;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(BackupDocuments.channel, (call) async {
-          if (fileError) {
-            throw PlatformException(
-              code: 'document',
-              message: 'Provider access denied',
-            );
-          }
-          if (call.method == 'open') return selected;
-          exported = call.arguments as Map;
-          return pendingExport == null ? exportResult : pendingExport!.future;
-        });
-  }
-
+  late FakeAuth auth;
+  late CloudBackupCoordinator cloud;
   void workflow(String name, WidgetTesterCallback body) {
     testWidgets(name, (tester) async {
-      initialize();
+      h = Harness();
+      device = TestDevice();
+      auth = FakeAuth();
+      cloud = CloudBackupCoordinator(
+        controller: h.controller,
+        auth: auth,
+        scheduler: FakeScheduler(),
+      );
+      addTearDown(() {
+        cloud.dispose();
+        h.controller.dispose();
+        device.dispose();
+      });
       await body(tester);
     });
   }
 
-  tearDown(() {
-    h.controller.dispose();
-    device.dispose();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(BackupDocuments.channel, null);
-  });
   Future<void> launch(WidgetTester tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(
-      TasbihApp(controller: h.controller, device: device),
+      TasbihApp(controller: h.controller, device: device, backup: cloud),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('settings-toggle')));
@@ -72,143 +51,155 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Uint8List backup() =>
-      BackupSerializer(h.config)
-          .export(h.controller.state, h.controller.settings, h.now);
-
   workflow(
-    'Settings actions export complete JSON with suggested filename and success',
+    'Settings has exactly one Backup/Restore entry; first connection keeps progress',
     (tester) async {
       h.controller.increment();
       await launch(tester);
-      expect(find.text('Export Backup'), findsOneWidget);
-      expect(find.text('Import Backup'), findsOneWidget);
-      await action(tester, 'export-backup');
-      expect(exported!['filename'], 'tasbih-backup-2026-11-02-05-00.json');
-      final root = jsonDecode(utf8.decode(exported!['bytes'] as Uint8List));
+      expect(find.text('Export Backup'), findsNothing);
+      expect(find.text('Import Backup'), findsNothing);
+      expect(find.text('Backup/Restore'), findsOneWidget);
+      await action(tester, 'backup-restore');
+      expect(auth.choices, 1);
+      expect(auth.drives['a']!.uploads, 1);
+      expect(h.controller.count, 1);
       expect(
-        root['data']['state']['prayers']['fajr']['counts']['subhanallah'],
-        1,
+        find.text('Backup successful. Connected to a@example.com.'),
+        findsWidgets,
       );
-      expect(find.text('Backup saved successfully.'), findsOneWidget);
     },
   );
-  workflow('export cancellation has no success notification', (tester) async {
-    exportResult = false;
-    await launch(tester);
-    await action(tester, 'export-backup');
-    expect(find.text('Backup saved successfully.'), findsNothing);
-  });
-  workflow('success waits for provider write completion and shows loading', (
+
+  workflow('connected tap uploads immediately and offers account switching', (
     tester,
   ) async {
-    pendingExport = Completer<bool>();
+    await cloud.connect();
     await launch(tester);
-    await tester.ensureVisible(find.byKey(const Key('export-backup')));
-    await tester.tap(find.byKey(const Key('export-backup')));
-    await tester.pump();
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('Backup saved successfully.'), findsNothing);
-    pendingExport!.complete(true);
+    await action(tester, 'backup-restore');
+    expect(auth.drives['a']!.uploads, 2);
+    expect(find.text('Switch Google account'), findsOneWidget);
+    auth.chosen = FakeAuth.b;
+    await tester.tap(find.text('Switch Google account'));
     await tester.pumpAndSettle();
-    expect(find.text('Backup saved successfully.'), findsOneWidget);
+    expect(cloud.account!.id, 'b');
+    expect(auth.drives['b']!.uploads, 1);
   });
-  workflow('export provider error displays failure', (tester) async {
-    fileError = true;
-    await launch(tester);
-    await action(tester, 'export-backup');
-    expect(find.text('Provider access denied'), findsOneWidget);
-    expect(find.text('Backup saved successfully.'), findsNothing);
-  });
-  workflow('picker cancellation preserves complete state and disk', (
-    tester,
-  ) async {
-    h.controller.increment();
-    await tester.pump();
-    await h.controller.flush();
-    final before = h.store.value;
-    await launch(tester);
-    await action(tester, 'import-backup');
-    expect(h.controller.count, 1);
-    expect(h.store.value, before);
-    expect(find.text('Restore backup?'), findsNothing);
-  });
+
   workflow(
-    'preview and explicit confirmation required, cancel preserves progress',
+    'existing account backup restores settings and custom count immediately',
     (tester) async {
-      selected = backup();
+      h.controller.toggleMode();
       h.controller.increment();
-      await tester.pump();
-      await h.controller.flush();
-      final before = h.store.value;
+      h.controller.setIntensity(75);
+      auth.drives['a']!.bytes = cloud.format.wrap(
+        cloud.format.serializer.export(
+          h.controller.state,
+          h.controller.settings,
+          h.now,
+        ),
+        h.now,
+      );
+      await h.controller.resetAll();
       await launch(tester);
-      await action(tester, 'import-backup');
-      expect(find.text('Restore backup?'), findsOneWidget);
+      await action(tester, 'backup-restore');
+      expect(h.controller.isCustom, true);
+      expect(h.controller.count, 1);
+      expect(find.text('Vibration Intensity: 75ms'), findsOneWidget);
+      expect(auth.drives['a']!.uploads, 0);
+    },
+  );
+
+  workflow(
+    'pending network operation shows progress and disables repeated backup and reset taps',
+    (tester) async {
+      auth.drives['a']!.gate = Completer<void>();
+      await launch(tester);
+      await tester.ensureVisible(find.byKey(const Key('backup-restore')));
+      await tester.tap(find.byKey(const Key('backup-restore')));
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      final backup = tester.widget<OutlinedButton>(
+        find.descendant(
+          of: find.byKey(const Key('backup-restore')),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      final reset = tester.widget<OutlinedButton>(
+        find.descendant(
+          of: find.byKey(const Key('reset-all')),
+          matching: find.byType(OutlinedButton),
+        ),
+      );
+      expect(backup.onPressed, isNull);
+      expect(reset.onPressed, isNull);
+      auth.drives['a']!.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(auth.drives['a']!.uploads, 1);
+    },
+  );
+
+  workflow(
+    'Reset cancellation has exactly two actions and changes no local or cloud data',
+    (tester) async {
+      h.controller.increment();
+      await cloud.connect();
+      await launch(tester);
+      await action(tester, 'reset-all');
+      expect(find.text('Cancel'), findsOneWidget);
+      expect(find.text('Reset Everything'), findsOneWidget);
       expect(
         find.textContaining(
-          'Restoring this backup will replace your current saved progress and settings.',
+          'your Google Drive backup for the connected account',
         ),
         findsOneWidget,
       );
-      expect(find.textContaining('Streak: 0'), findsOneWidget);
-      expect(find.textContaining('Custom Mode: 0 / 100'), findsOneWidget);
+      await action(tester, 'reset-cancel');
       expect(h.controller.count, 1);
-      await action(tester, 'import-cancel');
-      expect(h.store.value, before);
-      expect(h.controller.count, 1);
+      expect(auth.drives['a']!.deletions, 0);
     },
   );
-  workflow('confirmed restore updates UI, disk and all settings immediately', (
+
+  workflow('confirmed Reset Everything clears cloud, counters and connection', (
     tester,
   ) async {
-    h.controller.toggleMode();
     h.controller.increment();
-    h.controller.toggleStyle();
-    h.controller.setIntensity(75);
-    selected = backup();
-    await tester.pump();
-    await h.controller.resetAll();
+    await cloud.connect();
     await launch(tester);
-    await action(tester, 'import-backup');
-    expect(h.controller.isCustom, isFalse);
-    await action(tester, 'import-confirm');
-    expect(h.controller.isCustom, isTrue);
-    expect(h.controller.count, 1);
-    expect(h.controller.settings.vibrationIntensity, 75);
-    expect(find.text('Backup restored successfully.'), findsOneWidget);
-    final (state, settings) = await h.repository.load(h.config, h.now);
-    expect(state.customCount, 1);
-    expect(settings.vibrationIntensity, 75);
-    expect(find.text('Vibration Intensity: 75ms'), findsOneWidget);
+    await action(tester, 'reset-all');
+    await action(tester, 'reset-confirm');
+    expect(h.controller.count, 0);
+    expect(auth.drives['a']!.bytes, isNull);
+    expect(cloud.account, isNull);
   });
-  workflow('invalid JSON never opens confirmation or changes progress', (
+
+  workflow(
+    'cloud deletion failure displays error and preserves local progress',
+    (tester) async {
+      h.controller.increment();
+      await cloud.connect();
+      auth.drives['a']!.deleteFailure = true;
+      await launch(tester);
+      await action(tester, 'reset-all');
+      await action(tester, 'reset-confirm');
+      expect(h.controller.count, 1);
+      expect(auth.drives['a']!.bytes, isNotNull);
+      expect(find.text('Deletion failed. Retry.'), findsOneWidget);
+    },
+  );
+
+  workflow('no connected account reset uses local-only confirmation', (
     tester,
   ) async {
-    selected = Uint8List.fromList(utf8.encode('{invalid'));
     h.controller.increment();
     await launch(tester);
-    await action(tester, 'import-backup');
-    expect(find.text('Restore backup?'), findsNothing);
+    await action(tester, 'reset-all');
     expect(
-      find.text('Invalid backup JSON or missing required fields.'),
+      find.textContaining('local counter progress and settings'),
       findsOneWidget,
     );
-    expect(h.controller.count, 1);
-  });
-  workflow('failed restore displays failure and preserves live progress', (
-    tester,
-  ) async {
-    selected = backup();
-    h.controller.increment();
-    await tester.pump();
-    await h.controller.flush();
-    await launch(tester);
-    await action(tester, 'import-backup');
-    h.store.fail = true;
-    await action(tester, 'import-confirm');
-    expect(find.text('Backup restored successfully.'), findsNothing);
-    expect(find.textContaining('Backup operation failed.'), findsOneWidget);
-    expect(h.controller.count, 1);
+    await action(tester, 'reset-confirm');
+    expect(h.controller.count, 0);
+    expect(auth.resumes, 0);
   });
   workflow(
     'timer, broadcast and resume refresh prayer UI without selection interaction',

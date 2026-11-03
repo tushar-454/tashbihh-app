@@ -1,0 +1,195 @@
+00:00 +0: loading /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart
+00:00 +0: /home/tushar/development/tashbihh/test/backup_test.dart: exports complete UTF-8 versioned current state and settings
+00:00 +1: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: synchronized windows and Isha wrap at canonical boundaries
+00:00 +2: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +3: /home/tushar/development/tashbihh/test/backup_test.dart: same-day export/import restores equivalent normalized state without duplicate streak
+00:00 +4: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +5: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +6: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +7: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +8: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +9: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +10: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +11: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +12: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +13: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +14: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +15: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +16: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +17: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +18: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +19: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +20: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +21: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +22: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +23: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +24: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +25: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +26: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +27: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +28: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +29: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +30: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:01 +31: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:02 +32: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: startup remains usable while location is pending
+00:02 +33: /home/tushar/development/tashbihh/test/backup_test.dart: candidate is detached from preview mutations
+00:02 +34: /home/tushar/development/tashbihh/test/backup_test.dart: candidate is detached from preview mutations
+00:02 +35: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: foreground midnight timer fetches next date and Isha ends at new Fajr
+00:02 +36: /home/tushar/development/tashbihh/test/backup_test.dart: failed commit after a write rolls disk and memory back; counting blocked during commit
+00:02 +37: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: unavailable next-day Fajr uses complete JSON fallback at midnight
+00:02 +38: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: unavailable next-day Fajr uses complete JSON fallback at midnight
+00:02 +39: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: app launch/resume after several days refreshes without duplicate calls
+00:02 +40: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: Android clock event rechecks timezone and updates availability
+00:02 +41: /home/tushar/development/tashbihh/test/prayer_counter_sync_test.dart: first-launch explanation has no sync button and declining keeps counting functional
+00:03 +42: /home/tushar/development/tashbihh/test/prayer_times_test.dart: parses the actual AlAdhan Karachi/Hanafi response for Dhaka
+00:03 +43: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects server error
+00:03 +44: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects bad status
+00:03 +45: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects missing data
+00:03 +46: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects missing prayer
+00:03 +47: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects invalid hour
+00:03 +48: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects invalid minute
+00:03 +49: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects invalid string
+00:03 +50: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects unordered times
+00:03 +51: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects wrong date
+00:03 +52: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects invalid timestamp
+00:03 +53: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects missing timestamp
+00:03 +54: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects unknown timezone
+00:03 +55: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects wrong method
+00:03 +56: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects wrong school
+00:03 +57: /home/tushar/development/tashbihh/test/prayer_times_test.dart: rejects wrong coordinates
+00:03 +58: /home/tushar/development/tashbihh/test/prayer_times_test.dart: accepts timezone suffixes, rejects device/response offset mismatch
+00:03 +59: /home/tushar/development/tashbihh/test/prayer_times_test.dart: cache is invalid on another day, timezone, method or backwards clock
+00:03 +60: /home/tushar/development/tashbihh/test/prayer_times_test.dart: HTTP request uses dated HTTPS endpoint and centralized defaults
+00:03 +61: /home/tushar/development/tashbihh/test/prayer_times_test.dart: same-date daylight saving offset change invalidates cached times
+00:03 +62: /home/tushar/development/tashbihh/test/prayer_times_test.dart: HTTP timeout closes the client and permits a later request
+00:03 +63: /home/tushar/development/tashbihh/test/prayer_times_test.dart: HTTP rejects server or malformed response 503 unavailable
+00:03 +64: /home/tushar/development/tashbihh/test/prayer_times_test.dart: HTTP rejects server or malformed response 200 {}
+00:03 +65: /home/tushar/development/tashbihh/test/prayer_times_test.dart: HTTP rejects server or malformed response 200 not json
+00:03 +66: /home/tushar/development/tashbihh/test/prayer_times_test.dart: separate preference persists through a repository restart without touching progress
+00:03 +67: /home/tushar/development/tashbihh/test/prayer_times_test.dart: invalid persisted data falls back and failed writes retain previous cache
+00:04 +68: /home/tushar/development/tashbihh/test/domain_test.dart: complete authoritative dataset and prayer eligibility
+00:04 +69: /home/tushar/development/tashbihh/test/domain_test.dart: Fajr exact start inclusive and end exclusive
+00:04 +70: /home/tushar/development/tashbihh/test/domain_test.dart: Dhuhr exact start inclusive and end exclusive
+00:04 +71: /home/tushar/development/tashbihh/test/domain_test.dart: Asr exact start inclusive and end exclusive
+00:04 +72: /home/tushar/development/tashbihh/test/domain_test.dart: Maghrib exact start inclusive and end exclusive
+00:04 +73: /home/tushar/development/tashbihh/test/domain_test.dart: Isha exact start inclusive and end exclusive
+00:04 +74: /home/tushar/development/tashbihh/test/domain_test.dart: inactive selected prayer is blocked and cannot be selected during a window
+00:04 +75: /home/tushar/development/tashbihh/test/domain_test.dart: gap allows reviewing prayers but blocks counting
+00:04 +76: /home/tushar/development/tashbihh/test/domain_test.dart: window ending is enforced on tap without a heartbeat
+00:04 +77: /home/tushar/development/tashbihh/test/domain_test.dart: Dua target caps counts and adds completion once
+00:04 +78: /home/tushar/development/tashbihh/test/domain_test.dart: independent per-Dua progress and disallowed selection
+00:04 +79: /home/tushar/development/tashbihh/test/domain_test.dart: incomplete prayer reset remains available outside window, like source
+00:04 +80: /home/tushar/development/tashbihh/test/domain_test.dart: Custom Mode is independent, unlimited by time, target capped and resettable
+00:04 +81: /home/tushar/development/tashbihh/test/domain_test.dart: reducing custom target clamps count and preserves through daily rollover
+00:04 +82: /home/tushar/development/tashbihh/test/domain_test.dart: midnight clears all prayer data, preserves settings, custom and last success
+00:04 +83: /home/tushar/development/tashbihh/test/domain_test.dart: streak success requires three completed Duas in each prayer
+00:04 +84: /home/tushar/development/tashbihh/test/domain_test.dart: missing one prayer or only two Isha Duas cannot earn streak
+00:04 +85: /home/tushar/development/tashbihh/test/domain_test.dart: streak check mirrors source: no independent Isha time gate
+00:04 +86: /home/tushar/development/tashbihh/test/domain_test.dart: duplicate streak prevention on heartbeat and extra counts
+00:04 +87: /home/tushar/development/tashbihh/test/domain_test.dart: consecutive successful days increment streak
+00:04 +88: /home/tushar/development/tashbihh/test/domain_test.dart: consecutive successful days increment streak
+00:04 +89: /home/tushar/development/tashbihh/test/domain_test.dart: consecutive successful days increment streak
+00:05 +90: /home/tushar/development/tashbihh/test/prayer_location_test.dart: one-shot GPS request times out and cancels native location work
+00:05 +91: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:05 +92: /home/tushar/development/tashbihh/test/domain_test.dart: skipped day breaks streak; next success starts at one
+00:05 +93: /home/tushar/development/tashbihh/test/domain_test.dart: unfinished day breaks streak at next midnight
+00:06 +94: /home/tushar/development/tashbihh/test/domain_test.dart: local midnight arithmetic handles year/month/leap-day boundaries
+00:06 +95: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +96: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +97: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +98: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +99: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +100: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +101: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +102: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +103: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:06 +104: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +105: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +106: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +107: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +108: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +109: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +110: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +111: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +112: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +113: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +114: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +115: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +116: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +117: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +118: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +119: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +120: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +121: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +122: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +123: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +124: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +125: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +126: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +127: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +128: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +129: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +130: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +131: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:07 +132: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:08 +133: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +134: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +135: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +136: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +137: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +138: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +139: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +140: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +141: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +142: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +143: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +144: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +145: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +146: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +147: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +148: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:09 +149: /home/tushar/development/tashbihh/test/prayer_availability_test.dart: all civil seconds have at most one eligible prayer, including opt-in grace
+00:10 +150: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:10 +151: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:10 +152: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:10 +153: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:10 +154: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +155: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +156: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +157: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +158: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +159: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +160: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +161: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +162: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +163: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +164: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +165: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +166: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +167: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +168: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +169: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +170: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +171: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:12 +172: /home/tushar/development/tashbihh/test/widget_test.dart: main workflow counts, selects Dua and displays completion
+00:13 +173: /home/tushar/development/tashbihh/test/widget_test.dart: Custom Mode settings, style, target, fullscreen and double-tap reset
+00:13 +174: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings has exactly one Backup/Restore entry; first connection keeps progress
+00:14 +175: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings has exactly one Backup/Restore entry; first connection keeps progress
+00:14 +176: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings has exactly one Backup/Restore entry; first connection keeps progress
+00:15 +177: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Settings has exactly one Backup/Restore entry; first connection keeps progress
+00:15 +178: /home/tushar/development/tashbihh/test/widget_test.dart: outside menu dismissal never increments and escape closes settings
+00:15 +179: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: connected tap uploads immediately and offers account switching
+00:16 +180: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: connected tap uploads immediately and offers account switching
+00:16 +181: /home/tushar/development/tashbihh/test/widget_test.dart: responsive main, dropdown, settings and dialog 390.0x844.0
+00:16 +182: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: existing account backup restores settings and custom count immediately
+00:16 +183: /home/tushar/development/tashbihh/test/widget_test.dart: responsive main, dropdown, settings and dialog 844.0x390.0
+00:16 +184: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: pending network operation shows progress and disables repeated backup and reset taps
+00:17 +185: /home/tushar/development/tashbihh/test/widget_test.dart: responsive main, dropdown, settings and dialog 1440.0x900.0
+00:17 +186: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: Reset cancellation has exactly two actions and changes no local or cloud data
+00:17 +187: /home/tushar/development/tashbihh/test/widget_test.dart: 200 percent text scale remains scrollable and usable
+00:17 +188: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: confirmed Reset Everything clears cloud, counters and connection
+00:17 +189: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: cloud deletion failure displays error and preserves local progress
+00:18 +190: /home/tushar/development/tashbihh/test/backup_workflow_test.dart: no connected account reset uses local-only confirmation
+00:18 +191: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:18 +192: /home/tushar/development/tashbihh/test/visual_capture_test.dart: capture all source UI states with real offline fonts
+00:20 +193: All tests passed!

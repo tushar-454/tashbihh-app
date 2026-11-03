@@ -11,14 +11,15 @@ class SettingsPanel extends StatelessWidget {
     required this.controller,
     required this.device,
     required this.onReset,
-    required this.onExport,
-    required this.onImport,
+    required this.onBackup,
+    this.backupStatus,
     this.backupBusy = false,
     this.backupLoading = false,
   });
   final CounterController controller;
   final DeviceServices device;
-  final VoidCallback onReset, onExport, onImport;
+  final VoidCallback onReset, onBackup;
+  final String? backupStatus;
   final bool backupBusy, backupLoading;
   @override
   Widget build(BuildContext context) {
@@ -124,21 +125,13 @@ class SettingsPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SettingsAction(
-                      key: const Key('export-backup'),
-                      label: 'Export Backup',
-                      onPressed: backupBusy ? null : onExport,
-                    ),
-                    const SizedBox(height: 5.6),
-                    _label('Save your progress and settings as a JSON file.'),
-                    const SizedBox(height: 9.6),
-                    SettingsAction(
-                      key: const Key('import-backup'),
-                      label: 'Import Backup',
-                      onPressed: backupBusy ? null : onImport,
+                      key: const Key('backup-restore'),
+                      label: 'Backup/Restore',
+                      onPressed: backupBusy ? null : onBackup,
                     ),
                     const SizedBox(height: 5.6),
                     _label(
-                      'Restore your progress and settings from a saved backup.',
+                      backupStatus ?? 'Connect Google Drive to back up or restore progress.',
                     ),
                     if (backupLoading)
                       const Padding(
@@ -159,7 +152,7 @@ class SettingsPanel extends StatelessWidget {
                 key: const Key('reset-all'),
                 label: 'Reset all data',
                 danger: true,
-                onPressed: onReset,
+                onPressed: backupBusy ? null : onReset,
               ),
             ],
           ),

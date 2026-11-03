@@ -1,0 +1,3 @@
+Debug APK certificate SHA-1 verified with Android SDK apksigner:
+A6:44:8E:B8:CB:A2:78:17:B3:C4:83:70:59:E3:66:65:4D:23:43:8D
+Matches the supplied Android OAuth client configuration.

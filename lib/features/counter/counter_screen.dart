@@ -4,8 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../core/backup/backup_service.dart';
-import '../../core/platform/backup_documents.dart';
+import '../../core/backup/cloud_backup_coordinator.dart';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/semantics.dart';
@@ -25,9 +24,11 @@ class CounterScreen extends StatefulWidget {
     super.key,
     required this.controller,
     required this.device,
+    this.backup,
   });
   final CounterController controller;
   final DeviceServices device;
+  final CloudBackupCoordinator? backup;
   @override
   State<CounterScreen> createState() => _CounterScreenState();
 }
@@ -36,9 +37,9 @@ class _CounterScreenState extends State<CounterScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _duaOpen = false, _settingsOpen = false;
   bool _backupBusy = false;
-  bool _backupPreview = false;
+
   StreamSubscription<dynamic>? _clockEvents;
-  final _documents = BackupDocuments();
+  CloudBackupCoordinator? get cloud => widget.backup;
   final _duaLink = LayerLink();
   late final AnimationController _pulse;
   CounterController get c => widget.controller;
@@ -53,6 +54,7 @@ class _CounterScreenState extends State<CounterScreen>
     );
     _lastCount = c.count;
     c.addListener(_changed);
+    cloud?.addListener(_cloudChanged);
     widget.device.addListener(_deviceChanged);
     WidgetsBinding.instance.addObserver(this);
     c.startClock();
@@ -61,6 +63,7 @@ class _CounterScreenState extends State<CounterScreen>
       if (mounted &&
           (lifecycle == null || lifecycle == AppLifecycleState.resumed)) {
         c.prayerTimes?.resume(_explainLocation);
+        cloud?.resume();
       }
     });
     _clockEvents = widget.device.clockChanges.listen((_) {
@@ -120,9 +123,11 @@ class _CounterScreenState extends State<CounterScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       c.startClock();
+      cloud?.resume();
       c.prayerTimes?.resume(_explainLocation);
     } else {
       c.stopClock();
+      cloud?.suspend();
       c.prayerTimes?.suspend();
       widget.device.cancelFeedback();
       unawaited(c.flush());
@@ -136,6 +141,8 @@ class _CounterScreenState extends State<CounterScreen>
     c.prayerTimes?.suspend();
     unawaited(_clockEvents?.cancel());
     c.removeListener(_changed);
+    cloud?.removeListener(_cloudChanged);
+    cloud?.suspend();
     widget.device.removeListener(_deviceChanged);
     _pulse.dispose();
     super.dispose();
@@ -159,92 +166,54 @@ class _CounterScreenState extends State<CounterScreen>
     });
   }
 
-  Future<void> _backup({required bool importing}) async {
-    if (_backupBusy) return;
+  void _cloudChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _runCloud(Future<void> Function() operation) async {
+    try {
+      await operation();
+    } catch (_) {
+      // The coordinator supplies an actionable error, without token details.
+    }
+    if (mounted && cloud?.message != null) _message(cloud!.message!);
+  }
+
+  Future<void> _backup() async {
+    if (_backupBusy || (cloud?.busy ?? false)) return;
+    if (cloud == null) {
+      _message('Google Drive backup is available in the Android app.');
+      return;
+    }
     setState(() => _backupBusy = true);
     try {
-      final serializer = BackupSerializer(c.config);
-      if (importing) {
-        final bytes = await _documents.open();
-        if (bytes == null || !mounted) return;
-        final backup = serializer.validate(bytes);
-        final saved = backup.state(c.config);
-        final settings = backup.settings;
-        final prayerSummary = c.config.prayers
-            .map((p) {
-              final progress = saved.prayers[p.id]!;
-              return '${p.label}: ${progress.counts.values.fold<int>(0, (a, b) => a + b)} counts, ${progress.completed.length} completed';
-            })
-            .join('\n');
+      if (cloud!.account == null) {
+        await _runCloud(cloud!.connect);
+      } else {
+        // Every connected tap immediately backs up, regardless of its schedule.
+        await _runCloud(cloud!.backupNow);
         if (!mounted) return;
-        setState(() => _backupPreview = true);
-        final confirmed = await showDialog<bool>(
+        final switching = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: hsl(220, 15, 14, .98),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.4),
-              side: BorderSide(color: TasbihTheme.border),
-            ),
-            title: Text(
-              'Restore backup?',
-              style: TextStyle(fontFamily: 'Amiri', color: TasbihTheme.gold),
-            ),
-            content: SingleChildScrollView(
-              child: Text(
-                'Backup: ${backup.exportedAt.toLocal()}\n'
-                'Prayer progress date: ${saved.date}\n$prayerSummary\n\n'
-                'Streak: ${saved.streak} · Last successful day: ${saved.lastStreakDate ?? "None"}\n'
-                'Custom Mode: ${saved.customCount} / ${saved.customTarget}\n'
-                'Settings: ${settings.mode.name} mode, ${settings.style.name} counter, vibration ${settings.vibrationIntensity}ms.\n\n'
-                'Older prayer progress stays attached to its original date. Today’s counters and streak follow daily reset rules.\n\n'
-                'Restoring this backup will replace your current saved progress and settings.',
-                style: TextStyle(
-                  color: TasbihTheme.muted,
-                  fontSize: 12.8,
-                  height: 1.45,
-                ),
-              ),
+            title: const Text('Google Drive backup'),
+            content: Text(
+              '${cloud!.account!.email}\n\n${cloud!.message ?? ""}',
             ),
             actions: [
-              SettingsAction(
-                key: const Key('import-cancel'),
-                label: 'Cancel',
+              TextButton(
                 onPressed: () => Navigator.pop(context, false),
+                child: const Text('Close'),
               ),
-              SettingsAction(
-                key: const Key('import-confirm'),
-                label: 'Restore',
-                danger: true,
+              TextButton(
                 onPressed: () => Navigator.pop(context, true),
+                child: const Text('Switch Google account'),
               ),
             ],
           ),
         );
-        if (mounted) setState(() => _backupPreview = false);
-        if (confirmed != true || !mounted) return;
-        await c.restore(backup);
-        _message('Backup restored successfully.');
-      } else {
-        c.refresh(autoSelect: false);
-        final now = c.clock();
-        String pad(int v) => v.toString().padLeft(2, '0');
-        final filename =
-            'tasbih-backup-${now.year}-${pad(now.month)}-${pad(now.day)}-${pad(now.hour)}-${pad(now.minute)}.json';
-        final bytes = serializer.export(c.state, c.settings, now);
-        final saved = await _documents.save(filename, bytes);
-        if (saved) _message('Backup saved successfully.');
+        if (switching == true && mounted) await _runCloud(cloud!.connect);
       }
-    } on BackupException catch (e) {
-      _message(e.message);
-    } on PlatformException catch (e) {
-      _message(
-        e.message ?? 'Could not access this document. Please try again.',
-      );
-    } on MissingPluginException {
-      _message('Backup file picking is available in the Android app.');
-    } catch (e) {
-      _message('Backup operation failed. $e');
     } finally {
       if (mounted) setState(() => _backupBusy = false);
     }
@@ -253,10 +222,12 @@ class _CounterScreenState extends State<CounterScreen>
   void _message(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _resetDialog() async {
+    if (_backupBusy || (cloud?.busy ?? false)) return;
     _close();
     final confirmed = await showGeneralDialog<bool>(
       context: context,
@@ -317,7 +288,9 @@ class _CounterScreenState extends State<CounterScreen>
                           ),
                           const SizedBox(height: 9.6),
                           Text(
-                            'This will permanently remove saved progress, daily prayer counts, and streak data.',
+                            cloud?.account != null
+                                ? 'Are you sure you want to reset everything? This will permanently delete your local counter progress and your Google Drive backup for the connected account. This action cannot be undone.'
+                                : 'Are you sure you want to reset everything? This will permanently delete your local counter progress and settings. This action cannot be undone.',
                             style: TextStyle(
                               color: TasbihTheme.muted,
                               fontSize: 12.8,
@@ -339,7 +312,7 @@ class _CounterScreenState extends State<CounterScreen>
                               Expanded(
                                 child: SettingsAction(
                                   key: const Key('reset-confirm'),
-                                  label: 'Delete',
+                                  label: 'Reset Everything',
                                   danger: true,
                                   onPressed: () => Navigator.pop(context, true),
                                 ),
@@ -359,7 +332,21 @@ class _CounterScreenState extends State<CounterScreen>
     );
     if (confirmed == true) {
       widget.device.cancelFeedback();
-      await c.resetAll();
+      if (!mounted) return;
+      setState(() => _backupBusy = true);
+      try {
+        if (cloud != null) {
+          _message('Resetting data…');
+          await _runCloud(cloud!.resetEverything);
+        } else {
+          await c.resetAll();
+          _message('Everything reset.');
+        }
+      } catch (_) {
+        _message('Reset failed. Please retry.');
+      } finally {
+        if (mounted) setState(() => _backupBusy = false);
+      }
     }
   }
 
@@ -372,6 +359,9 @@ class _CounterScreenState extends State<CounterScreen>
       child: Focus(
         autofocus: true,
         child: Scaffold(
+          bottomNavigationBar: ((cloud?.busy ?? false) || c.restoring)
+              ? const LinearProgressIndicator(minHeight: 2)
+              : null,
           body: AnimatedContainer(
             duration: media.disableAnimations
                 ? Duration.zero
@@ -722,10 +712,12 @@ class _CounterScreenState extends State<CounterScreen>
                                 controller: c,
                                 device: widget.device,
                                 onReset: _resetDialog,
-                                onExport: () => _backup(importing: false),
-                                onImport: () => _backup(importing: true),
-                                backupBusy: _backupBusy,
-                                backupLoading: _backupBusy && !_backupPreview,
+                                onBackup: _backup,
+                                backupBusy:
+                                    _backupBusy || (cloud?.busy ?? false),
+                                backupLoading: cloud?.busy ?? false,
+                                backupStatus:
+                                    cloud?.message ?? cloud?.account?.email,
                               ),
                             ),
                           ),

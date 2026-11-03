@@ -14,6 +14,8 @@ dependencies:
   geolocator_android: 5.2.1
   http: 1.6.0
   timezone: 0.11.2
+  google_sign_in: ^7.2.0
+  crypto: ^3.0.8
 dev_dependencies:
   flutter_test:
     sdk: flutter

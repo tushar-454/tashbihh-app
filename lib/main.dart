@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'core/backup/cloud_backup_coordinator.dart';
+import 'core/backup/cloud_ports.dart';
+import 'core/backup/google_drive_backup.dart';
 import 'core/config/tasbih_config.dart';
 import 'core/platform/platform_services.dart';
 import 'core/storage/progress_repository.dart';
@@ -64,5 +67,12 @@ Future<void> main() async {
     settings: settings,
     prayerTimes: prayerTimes,
   );
-  runApp(TasbihApp(controller: controller, device: device));
+  final backup = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+      ? CloudBackupCoordinator(
+          controller: controller,
+          auth: GoogleBackupAuth(),
+          scheduler: ForegroundBackupScheduler(),
+        )
+      : null;
+  runApp(TasbihApp(controller: controller, device: device, backup: backup));
 }

@@ -28,6 +28,7 @@ class PreferencesStore implements SnapshotStore {
 class ProgressRepository {
   ProgressRepository(this.store);
   final SnapshotStore store;
+  Map<String, dynamic> cloudMetadata = {};
   Future<(AppState, AppSettings)> load(
     TasbihConfig config,
     DateTime now,
@@ -37,10 +38,12 @@ class ProgressRepository {
       if (raw != null) {
         final json = jsonDecode(raw) as Map<String, dynamic>;
         if (json['version'] == 1) {
-          return (
-            AppState.fromJson(config, json['state']),
-            AppSettings.fromJson(json['settings']),
-          );
+          final state = AppState.fromJson(config, json['state']);
+          final settings = AppSettings.fromJson(json['settings']);
+          cloudMetadata = json['cloud'] is Map<String, dynamic>
+              ? Map<String, dynamic>.from(json['cloud'])
+              : {};
+          return (state, settings);
         }
       }
     } catch (_) {
@@ -49,8 +52,13 @@ class ProgressRepository {
     return (AppState.empty(config, now), AppSettings());
   }
 
-  String encode(AppState state, AppSettings settings) => jsonEncode({
+  String encode(
+    AppState state,
+    AppSettings settings, {
+    Map<String, dynamic>? cloud,
+  }) => jsonEncode({
     'version': 1,
+    'cloud': cloud ?? cloudMetadata,
     'state': state.toJson(),
     'settings': settings.toJson(),
   });
@@ -74,4 +82,12 @@ class ProgressRepository {
   }
 
   Future<void> save(String snapshot) => store.write(snapshot);
+
+  /// A count captured while a cloud metadata write was pending must carry the
+  /// newly committed metadata when its turn in the write queue arrives.
+  Future<void> saveProgress(String snapshot) {
+    final data = jsonDecode(snapshot) as Map<String, dynamic>;
+    data['cloud'] = cloudMetadata;
+    return store.write(jsonEncode(data));
+  }
 }
