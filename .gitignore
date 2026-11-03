@@ -46,3 +46,12 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Android signing material must never be committed, regardless of its directory.
+*.jks
+*.keystore
+*.p12
+*.pfx
+key.properties
+*.keystore.base64
+*.jks.base64

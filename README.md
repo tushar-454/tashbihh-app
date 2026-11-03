@@ -29,7 +29,10 @@ flutter test
 flutter build apk --release
 ```
 
-APK: `build/app/outputs/flutter-apk/app-release.apk`. The starter's debug signing key is used for the installable release build; set up your private key before store distribution.
+APK: `build/app/outputs/flutter-apk/app-release.apk`. Release builds require your
+existing private signing key; there is no debug-key fallback. Follow the
+[Android release setup](docs/android-releases.md) to configure local signing and
+automatic signed APK releases on app-related pushes to `main`.
 
 For an offline Web release, run `flutter build web --release`, then `python3 tool/prepare_web_offline.py`, and serve `build/web` over HTTPS or localhost. Native apps work offline immediately; Web requires one initial cached load.
 

@@ -1,7 +1,40 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.isFile) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
+// CI uses environment variables; local builds can use ignored key.properties.
+fun signingValue(environment: String, property: String): String? =
+    System.getenv(environment)?.takeIf { it.isNotEmpty() }
+        ?: keystoreProperties.getProperty(property)?.takeIf { it.isNotEmpty() }
+
+val releaseStoreFile = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
+val releaseStorePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingValue("ANDROID_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingValue("ANDROID_KEY_PASSWORD", "keyPassword")
+val hasReleaseSigning = listOf(
+    releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword,
+).all { it != null }
+
+// Check resolved tasks so debug builds and IDE sync still work without secrets.
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.project == project && it.name.contains("Release") }) {
+        check(hasReleaseSigning && rootProject.file(releaseStoreFile!!).isFile) {
+            "Release signing is required. Configure android/key.properties or the " +
+                "ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, " +
+                "ANDROID_KEY_PASSWORD environment variables. See docs/android-releases.md. " +
+                "Release builds never fall back to a debug key."
+        }
+    }
 }
 
 android {
@@ -21,19 +54,25 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
+        // Flutter's --build-number and --build-name override pubspec values in CI.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
