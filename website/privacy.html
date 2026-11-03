@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Tashbihh Counter handles local progress, optional location, Google authentication, private Google Drive backups, and data deletion.">
+  <meta name="theme-color" content="#245b45">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Privacy Policy — Tashbihh Counter</title>
+  <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Tashbihh Counter home"><img src="assets/app-icon.svg" width="40" height="40" alt=""><span>Tashbihh Counter</span></a>
+      <nav aria-label="Main navigation"><a href="index.html">Home</a><a href="privacy.html" aria-current="page">Privacy</a><a href="terms.html">Terms</a></nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="document-header">
+      <div class="container">
+        <p class="eyebrow">Your data, explained</p>
+        <h1>Privacy Policy</h1>
+        <p class="lead">This policy explains how the Tashbihh Counter Android app and this informational website handle information.</p>
+        <p class="effective-date">Effective date: <time datetime="2026-11-03">November 3, 2026</time></p>
+      </div>
+    </div>
+    <div class="container document-layout">
+      <aside class="document-toc" aria-label="Policy contents">
+        <p>On this page</p>
+        <nav aria-label="Privacy policy sections">
+          <a href="#overview">Overview</a><a href="#local-data">Local data</a><a href="#location">Location &amp; prayer times</a><a href="#google-drive">Google &amp; Drive backup</a><a href="#deletion">Reset &amp; deletion</a><a href="#services">Third-party services</a><a href="#security">Sharing &amp; security</a><a href="#choices">Your choices</a><a href="#google-policy">Google data policy</a><a href="#website">This website</a><a href="#contact">Contact &amp; updates</a>
+        </nav>
+      </aside>
+      <div class="document-content">
+        <section id="overview" aria-labelledby="overview-title">
+          <h2 id="overview-title">1. Overview</h2>
+          <p>Tashbihh Counter is a Flutter-based Android Tasbih and prayer counter application. Counting and local progress storage do not require a Google account. Location-based prayer times and Google Drive backup are optional network features.</p>
+          <p>The current app implementation contains no advertising, analytics, or crash-reporting SDKs and no developer-operated data collection server. Network features communicate directly with Google and AlAdhan as described below.</p>
+        </section>
+        <section id="local-data" aria-labelledby="local-title">
+          <h2 id="local-title">2. Information stored on your device</h2>
+          <p>The app stores information in Android app preferences using Flutter’s SharedPreferences library:</p>
+          <ul>
+            <li><strong>Prayer progress:</strong> the progress date, selected prayer and dhikr, counts for each supported dhikr, and completion status.</li>
+            <li><strong>Custom counter:</strong> the current custom count and target. The implemented Custom Mode uses one adjustable counter, rather than a collection of named custom counters.</li>
+            <li><strong>Streak information:</strong> the streak count, last successful streak date, and a dated prayer/streak record retained when older progress is restored.</li>
+            <li><strong>Settings:</strong> prayer or custom mode, classic or modern counter style, and vibration intensity.</li>
+            <li><strong>Backup connection information:</strong> the selected Google account’s identifier and email address, backup/check timestamps, a change-detection fingerprint, and a pending-reset marker when needed.</li>
+            <li><strong>Prayer-time cache:</strong> rounded latitude and longitude, the daily prayer times and date, calculation method and school, time-zone information, and synchronization timestamp.</li>
+            <li><strong>Permission prompt record:</strong> a marker remembering that the location explanation has already been shown or attempted.</li>
+          </ul>
+          <p>Progress and settings are saved as you use the app. The prayer-time cache is separate from progress and is replaced after a successful synchronization. Information remains locally until replaced, reset where applicable, or removed through Android’s app storage controls. The app disables Android’s standard automatic app backup in its manifest.</p>
+        </section>
+        <section id="location" aria-labelledby="location-title">
+          <h2 id="location-title">3. Location permission and prayer times</h2>
+          <p>The Android app requests location permission to retrieve prayer times for your area. When permission is granted, device location services are enabled, and a fresh schedule is needed, it requests a single current location reading while the app is in the foreground.</p>
+          <p><strong>Coordinates are rounded to three decimal places</strong> before being sent over HTTPS to the <a href="https://aladhan.com/prayer-times-api">AlAdhan Prayer Times API</a>. The request contains latitude, longitude, the requested date, and calculation method and school. AlAdhan also receives the network information needed to serve the request, such as your IP address. Counter progress and Google account details are not included in this request.</p>
+          <p>The rounded coordinates are saved locally with the returned prayer schedule. Device and schedule time zones are used to validate that the schedule is appropriate for the current day. <strong>Neither the location/prayer-time cache nor the permission prompt record is included in the app’s Google Drive backup.</strong></p>
+          <p>The app reuses a valid daily cache. It checks on foreground startup/resume and date or time-zone changes, with limited retries after network failures. It does not use a continuous location stream or request background location permission; location requests are cancelled when the app leaves the foreground. Moving within the same day and time zone may not immediately refresh a still-valid cache.</p>
+          <p>You can decline the in-app explanation, deny the Android permission request, or revoke access through Android Settings → Apps → Tasbih Counter → Permissions → Location. Your installed app may appear as “Tasbih Counter.” Without permission or a usable connection, the app uses an existing valid daily cache or its configured fallback schedule. Fallback times may not be accurate for your location.</p>
+          <p>Revoking permission prevents new location readings; it does not erase an already saved cache. Use Android’s app storage controls to remove all local data, as explained below.</p>
+        </section>
+        <section id="google-drive" aria-labelledby="drive-title">
+          <h2 id="drive-title">4. Optional Google account and Drive backup</h2>
+          <p>You choose whether to connect a Google account through Settings → Backup/Restore. Google handles account authentication and permission approval. The app uses the account identifier and email address to identify the selected backup account and show its connection status.</p>
+          <p>The app requests the Drive scope <code>https://www.googleapis.com/auth/drive.appdata</code>. It uses Google Drive’s private <code>appDataFolder</code> to find, create, update, download, and delete its app-specific backup file, <code>tasbihh_backup.json</code>, in the account you select. This permission does not grant access to your unrelated Drive files. The private folder is not shown as an ordinary folder in your Drive file list.</p>
+          <h3>What the backup contains</h3>
+          <p>Backups contain prayer progress, custom count and target, streak information, any retained historical restore record, and app settings. The backup also contains format/app version information, timestamps, and an integrity checksum. The locally stored Google account connection metadata, location cache, and permission prompt record are excluded. Prayer progress can reveal information about your religious practice; enable cloud backup only if you are comfortable storing that information with Google.</p>
+          <h3>Connecting or switching an account</h3>
+          <p><strong>If the selected account contains a valid, compatible backup, connecting automatically restores it and replaces local progress and settings.</strong> Dated progress is adjusted for the current day, and older prayer/streak information may be kept as a historical restore record. If there is no backup, your local progress is retained and the app creates the first backup. A failed or invalid restore is reported rather than intentionally replacing local progress.</p>
+          <p>Switching accounts checks the newly selected account using the same behavior. It does not delete backups or revoke authorization in previously selected accounts. Only the successfully connected account is used for subsequent backups.</p>
+          <h3>When backups run</h3>
+          <p>Once connected, tapping Backup/Restore attempts an immediate upload of current progress before showing the account dialog. Automatic checks use a <strong>12-hour due interval</strong>, check for overdue work on startup/resume, and periodically check while the app is active. Automatic uploads skip unchanged progress.</p>
+          <p>This may produce roughly twice-daily uploads if the app is used often and data changes. <strong>The implemented scheduler runs only while the app is in the foreground; it does not run backups while the app is closed or in the background.</strong> Android lifecycle restrictions, connectivity, authorization, storage, and service availability can delay or prevent backups. This is a latest-backup mechanism, not continuous synchronization or a versioned backup history.</p>
+          <h3>Authentication information</h3>
+          <p>The Google Sign-In SDK manages authentication. The app uses an access token to authorize Drive requests; its own progress and backup files do not store access or refresh tokens. Google’s SDK and Android may manage authentication state separately from the app’s preferences.</p>
+        </section>
+        <section id="deletion" aria-labelledby="deletion-title">
+          <h2 id="deletion-title">5. Resetting and deleting data</h2>
+          <p>In Settings, choose <strong>Reset all data</strong>, then confirm <strong>Reset Everything</strong>. The behavior depends on whether an account is connected:</p>
+          <ul>
+            <li><strong>Without a connected account:</strong> the app resets local prayer progress, the custom counter, streak data, settings, and backup connection metadata.</li>
+            <li><strong>With a connected account:</strong> the app first attempts to delete its backup file, including matching duplicate backup files, from that account’s private Drive storage and verifies that they are absent. Only then does it reset local progress, settings, and connection metadata.</li>
+          </ul>
+          <p><strong>Cloud deletion requires a working connection and valid Google authorization.</strong> If authorization, deletion verification, or another reset step fails, reset may remain pending and local progress may be retained. The app suspends automatic backup while a reset is pending; retry Reset Everything after resolving the error. A partial failure may mean that a cloud backup was deleted even though the local reset did not finish.</p>
+          <div class="notice"><p><strong>Reset Everything does not clear the separate prayer-time cache or location prompt record, and it does not revoke Google authorization.</strong> To remove those local records too, use Android Settings → Apps → Tasbih Counter → Storage (or Storage &amp; cache) → Clear storage, or uninstall the app. Android labels vary by device.</p></div>
+          <p>Clearing Android app storage or uninstalling does not itself delete a Drive backup or revoke Google access. Reset only targets the currently connected account; backups in accounts used previously remain unless separately removed. Where available, Google Drive Settings → Manage apps lets you manage the app’s hidden app data in each account. Google controls retention in its own systems under its policies.</p>
+        </section>
+        <section id="services" aria-labelledby="services-title">
+          <h2 id="services-title">6. Third-party services and permissions</h2>
+          <ul>
+            <li><strong>Google authentication:</strong> processes your chosen account and authorization interactions so the app can obtain permission for private backups.</li>
+            <li><strong>Google Drive:</strong> receives authorized API requests and the backup contents described above to store, restore, update, or delete your app backup.</li>
+            <li><strong>AlAdhan:</strong> receives rounded coordinates, date, calculation parameters, and network request information to return prayer times.</li>
+          </ul>
+          <p>Network services can receive your IP address and ordinary connection/request metadata. They process information under their own terms and policies. See <a href="https://policies.google.com/privacy">Google’s Privacy Policy</a> and <a href="https://aladhan.com/">AlAdhan’s service website</a> for service information. The app does not control either provider’s logging or retention.</p>
+          <p>The app declares internet, coarse/fine location, and vibration permissions. Location is requested through Android’s permission system for prayer times. Vibration supports counter feedback. The app does not request contacts, microphone, camera, or background location access in its manifest.</p>
+        </section>
+        <section id="security" aria-labelledby="security-title">
+          <h2 id="security-title">7. Data sharing and security</h2>
+          <p>The implemented app does not sell user data, send it to advertising or analytics services, or route your backups through a developer server. It sends information to Google and AlAdhan for the features you choose, as described above. The developer does not receive a copy of your Drive backup through the app.</p>
+          <p>Drive and AlAdhan requests use HTTPS. Local information is stored in app preferences; the app does not add its own encryption to that storage. Cloud backups use encoded JSON and an integrity checksum, <strong>not app-provided encryption or end-to-end encryption</strong>. Google’s storage protections are managed by Google. A checksum helps detect accidental damage and is not a guarantee against tampering.</p>
+          <p>Protect your device and Google account. No storage system or network service can be guaranteed completely secure. If you contact the developer by email, your address and anything you include are received by the developer and email providers to handle your request. Avoid sending passwords, tokens, or unnecessary personal details.</p>
+        </section>
+        <section id="choices" aria-labelledby="choices-title">
+          <h2 id="choices-title">8. Your choices</h2>
+          <ul>
+            <li><strong>Use local counting:</strong> do not connect Backup/Restore if you do not want Google Drive backup.</li>
+            <li><strong>Decline location:</strong> deny permission or revoke it in Android settings. Counting remains available, subject to prayer-mode availability windows.</li>
+            <li><strong>Revoke Google access:</strong> open your <a href="https://myaccount.google.com/connections">Google Account’s third-party connections</a>, select the app, and remove its access. There is no separate in-app disconnect or revoke button. Revocation stops authorized Drive operations but does not itself erase saved local data or guarantee deletion of an existing backup.</li>
+            <li><strong>Delete a connected backup:</strong> complete Reset Everything while online and authorized, preferably before revoking access. For older accounts, use their Google Drive app-data controls or reconnect and carefully follow the restore/reset behavior above.</li>
+            <li><strong>Remove all local records:</strong> clear the app’s Android storage or uninstall it. Manage any remaining cloud data separately.</li>
+            <li><strong>Ask for help:</strong> contact the developer using the email below. App data lives on your device and in your selected Google account; the developer cannot directly erase those copies on your behalf.</li>
+          </ul>
+        </section>
+        <section id="google-policy" aria-labelledby="policy-title">
+          <h2 id="policy-title">9. Google API Services User Data Policy</h2>
+          <p>Tashbihh Counter’s use and transfer of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements where applicable.</p>
+          <p>In this implementation, Google user information is used to identify your chosen backup account and provide backup, restoration, and deletion. It is not used for advertising, sold, or used to train AI models. This statement describes the app’s data-use commitment; it does not mean Google has verified, certified, or approved the app.</p>
+        </section>
+        <section id="website" aria-labelledby="website-title">
+          <h2 id="website-title">10. This informational website</h2>
+          <p>This website has no sign-in, forms, analytics scripts, advertising, third-party fonts, or app-created cookies or browser storage. Visiting it does not connect the Android app to Google or request your location. Following an external link or sending email takes you to a separate service.</p>
+          <p>When hosted on GitHub Pages, GitHub processes visitor connection information to serve and secure the site. GitHub states that it logs visitors’ IP addresses for security purposes. See the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a> and <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages#data-collection">GitHub Pages data collection notice</a>.</p>
+        </section>
+        <section id="contact" aria-labelledby="contact-title">
+          <h2 id="contact-title">11. Contact and policy updates</h2>
+          <p>For privacy questions or support, contact the Tashbihh Counter developer:</p>
+          <p><a class="contact-link" href="mailto:tusharimran.olw@gmail.com">tusharimran.olw@gmail.com</a></p>
+          <p>Updates will be published on this page with a revised effective date. Review this page when updating the app. New uses of Google user data will require updated disclosures and any consent required by Google’s policies before those uses begin.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><p>Tashbihh Counter <span class="footer-note">A companion for daily dhikr.</span></p><nav aria-label="Footer navigation"><a href="index.html">Home</a><a href="privacy.html" aria-current="page">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav></div></footer>
+</body>
+</html>
