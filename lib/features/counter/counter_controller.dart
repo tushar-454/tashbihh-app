@@ -6,6 +6,8 @@ import '../../core/config/tasbih_config.dart';
 import '../../core/backup/backup_service.dart';
 import '../../core/models/app_state.dart';
 import '../../core/storage/progress_repository.dart';
+import '../../core/prayer/prayer_time_sync.dart';
+import '../../core/time/prayer_schedule.dart';
 import '../streak/streak_rules.dart';
 
 typedef Clock = DateTime Function();
@@ -17,13 +19,19 @@ class CounterController extends ChangeNotifier {
     required this.state,
     required this.settings,
     Clock? clock,
+    this.prayerTimes,
   }) : clock = clock ?? DateTime.now {
     now = this.clock();
+    prayerTimes?.addListener(_scheduleChanged);
     refresh();
   }
   final TasbihConfig config;
   final ProgressRepository repository;
   final Clock clock;
+  final PrayerTimeSync? prayerTimes;
+  PrayerSchedule get schedule =>
+      prayerTimes?.scheduleFor(now) ?? config.schedule;
+  void _scheduleChanged() => refresh();
   AppState state;
   AppSettings settings;
   late DateTime now;
@@ -41,7 +49,7 @@ class CounterController extends ChangeNotifier {
   int get count =>
       isCustom ? state.customCount : (progress.counts[dua.id] ?? 0);
   int get target => isCustom ? state.customTarget : dua.target;
-  String? get activePrayer => config.activePrayer(now);
+  String? get activePrayer => schedule.activePrayer(now);
   bool get done => count >= target;
   bool completed(Dhikr d) => (progress.counts[d.id] ?? 0) >= d.target;
   bool canSelect(String prayer) =>
@@ -49,7 +57,7 @@ class CounterController extends ChangeNotifier {
   bool get canCount =>
       !restoring &&
       !done &&
-      (isCustom || (config.schedule.eligible(state.selectedPrayer, now)));
+      (isCustom || (schedule.eligible(state.selectedPrayer, now)));
   String get counterHint {
     if (done) {
       return isCustom
@@ -58,7 +66,7 @@ class CounterController extends ChangeNotifier {
     }
     if (isCustom) return 'Tap to count. Double tap to reset.';
     if (activePrayer != state.selectedPrayer) {
-      return 'Not available at this time · ${config.prayer(state.selectedPrayer).windowLabel}';
+      return 'Not available at this time · ${schedule.windowLabel(state.selectedPrayer)}';
     }
     return 'Available now. Tap to count. Double tap to reset incomplete progress.';
   }
@@ -77,7 +85,7 @@ class CounterController extends ChangeNotifier {
   void _scheduleRefresh() {
     _heartbeat?.cancel();
     if (!_clockRunning || _disposed) return;
-    final until = config.schedule.nextTransition(now).difference(now);
+    final until = schedule.nextTransition(now).difference(now);
     // Exact boundaries plus a low-frequency fallback for platforms without
     // Android clock-change broadcasts. No background polling.
     final delay = until < const Duration(minutes: 1)
@@ -89,6 +97,7 @@ class CounterController extends ChangeNotifier {
   void refresh({bool autoSelect = true}) {
     if (restoring) return;
     now = clock();
+    prayerTimes?.observeClock(now);
     _scheduleRefresh();
     var changed = StreakRules.rollForward(state, config, now);
     final active = activePrayer;
@@ -211,7 +220,8 @@ class CounterController extends ChangeNotifier {
         };
       }
       StreakRules.rollForward(candidate, config, localNow);
-      final active = config.schedule.activePrayer(localNow);
+      final active = (prayerTimes?.scheduleFor(localNow) ?? config.schedule)
+          .activePrayer(localNow);
       if (restoredSettings.mode == AppMode.prayer && active != null) {
         candidate.selectedPrayer = active;
       }
@@ -260,6 +270,8 @@ class CounterController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _heartbeat?.cancel();
+    prayerTimes?.removeListener(_scheduleChanged);
+    prayerTimes?.dispose();
     super.dispose();
   }
 }

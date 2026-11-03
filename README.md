@@ -2,6 +2,10 @@
 
 An offline Flutter implementation of [tushar-454/tasbihh](https://github.com/tushar-454/tasbihh), preserving its prayer schedules, all 11 Dhikr entries, streak rules, Custom Mode, settings and navy/gold visual identity.
 
+Android automatically synchronizes local prayer times once per day while the app
+is open, with persistent caching and the existing JSON schedule as its offline
+fallback. See [prayer-time behavior and implementation](docs/prayer-times.md).
+
 ```sh
 flutter pub get
 flutter run -d emulator-5554  # Android

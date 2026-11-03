@@ -12,6 +12,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
+import java.util.TimeZone
 
 class MainActivity : FlutterActivity() {
     private var pending: MethodChannel.Result? = null
@@ -27,6 +28,11 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tasbih/local_timezone")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "getTimeZone") result.success(TimeZone.getDefault().id)
+                else result.notImplemented()
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tasbih/backup_documents")
             .setMethodCallHandler { call, result ->
                 if (call.method != "save" && call.method != "open") {

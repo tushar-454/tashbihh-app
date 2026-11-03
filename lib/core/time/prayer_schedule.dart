@@ -6,14 +6,29 @@ import '../config/tasbih_config.dart';
 /// A nonzero end grace explicitly opts into extending configured inactive gaps.
 /// Grace never crosses midnight or the following prayer's canonical start.
 class PrayerSchedule {
-  PrayerSchedule(List<PrayerDefinition> definitions, {this.endGraceMinutes = 0})
-    : prayers = [...definitions]..sort((a, b) => a.start.compareTo(b.start)) {
+  PrayerSchedule(
+    List<PrayerDefinition> definitions, {
+    this.endGraceMinutes = 0,
+    this.earlyIshaEnd,
+  }) : prayers = [...definitions]..sort((a, b) => a.start.compareTo(b.start)) {
     if (endGraceMinutes < 0 || endGraceMinutes > 180) {
       throw ArgumentError.value(endGraceMinutes, 'endGraceMinutes');
     }
   }
   final List<PrayerDefinition> prayers;
   final int endGraceMinutes;
+
+  /// Only set for today's synchronized schedule. Early Isha ends at TODAY'S
+  /// known Fajr. At midnight the resolver requires the NEW day's schedule;
+  /// without it the complete JSON schedule is used, never yesterday's Fajr.
+  final int? earlyIshaEnd;
+
+  String windowLabel(String id) {
+    final prayer = prayers.firstWhere((p) => p.id == id);
+    return id == 'isha' && earlyIshaEnd != null
+        ? '${prayer.windowLabel.split(' – ').first} – next Fajr (configured fallback if unavailable)'
+        : prayer.windowLabel;
+  }
 
   int endOf(PrayerDefinition prayer) {
     final index = prayers.indexOf(prayer);
@@ -25,6 +40,7 @@ class PrayerSchedule {
 
   String? activePrayer(DateTime local) {
     final minute = local.hour * 60 + local.minute;
+    if (earlyIshaEnd != null && minute < earlyIshaEnd!) return 'isha';
     // Latest canonical start wins even if malformed configuration overlaps.
     for (final prayer in prayers.reversed) {
       if (minute >= prayer.start && minute < endOf(prayer)) return prayer.id;
@@ -33,9 +49,12 @@ class PrayerSchedule {
   }
 
   bool eligible(String prayer, DateTime local) => activePrayer(local) == prayer;
-  bool ended(String id, DateTime local) =>
-      local.hour * 60 + local.minute >=
-      endOf(prayers.firstWhere((p) => p.id == id));
+  bool ended(String id, DateTime local) => id == 'isha' && earlyIshaEnd != null
+      ? local.hour * 60 + local.minute >= earlyIshaEnd! &&
+            local.hour * 60 + local.minute <
+                prayers.firstWhere((p) => p.id == id).start
+      : local.hour * 60 + local.minute >=
+            endOf(prayers.firstWhere((p) => p.id == id));
 
   DateTime nextTransition(DateTime local) {
     final candidates = <DateTime>[

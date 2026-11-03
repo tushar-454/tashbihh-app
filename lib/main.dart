@@ -7,6 +7,10 @@ import 'app/app.dart';
 import 'core/config/tasbih_config.dart';
 import 'core/platform/platform_services.dart';
 import 'core/storage/progress_repository.dart';
+import 'core/prayer/aladhan_client.dart';
+import 'core/prayer/prayer_location.dart';
+import 'core/prayer/prayer_time_sync.dart';
+import 'core/prayer/prayer_times_repository.dart';
 import 'features/counter/counter_controller.dart';
 
 Future<void> main() async {
@@ -26,9 +30,30 @@ Future<void> main() async {
     }
   });
   final config = await TasbihConfig.load();
-  final repository = ProgressRepository(
-    PreferencesStore(await SharedPreferences.getInstance()),
-  );
+  final preferences = await SharedPreferences.getInstance();
+  final repository = ProgressRepository(PreferencesStore(preferences));
+  PrayerTimeSync? prayerTimes;
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    prayerTimes = PrayerTimeSync(
+      config: config,
+      repository: PrayerTimesRepository(
+        PreferencesStore(
+          preferences,
+          storageKey: PrayerTimesRepository.cacheKey,
+        ),
+      ),
+      location: PrayerLocation(
+        AndroidPrayerLocation(),
+        PreferencesStore(
+          preferences,
+          storageKey: PrayerTimesRepository.permissionKey,
+        ),
+      ),
+      api: AladhanClient(),
+      readTimeZone: AndroidPrayerLocation.timeZoneId,
+    );
+    await prayerTimes.load();
+  }
   final (state, settings) = await repository.load(config, DateTime.now());
   final device = createDeviceServices();
   await device.initialize();
@@ -37,6 +62,7 @@ Future<void> main() async {
     repository: repository,
     state: state,
     settings: settings,
+    prayerTimes: prayerTimes,
   );
   runApp(TasbihApp(controller: controller, device: device));
 }

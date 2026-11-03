@@ -11,14 +11,15 @@ abstract class SnapshotStore {
 }
 
 class PreferencesStore implements SnapshotStore {
-  PreferencesStore(this.preferences);
+  PreferencesStore(this.preferences, {this.storageKey = key});
   final SharedPreferences preferences;
   static const key = 'tasbih.native.snapshot.v1';
+  final String storageKey;
   @override
-  Future<String?> read() async => preferences.getString(key);
+  Future<String?> read() async => preferences.getString(storageKey);
   @override
   Future<void> write(String value) async {
-    if (!await preferences.setString(key, value)) {
+    if (!await preferences.setString(storageKey, value)) {
       throw StateError('Could not save progress');
     }
   }

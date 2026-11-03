@@ -43,6 +43,7 @@ class _CounterScreenState extends State<CounterScreen>
   late final AnimationController _pulse;
   CounterController get c => widget.controller;
   int _lastCount = 0;
+  String? _lastPrayerMessage;
   @override
   void initState() {
     super.initState();
@@ -55,10 +56,17 @@ class _CounterScreenState extends State<CounterScreen>
     widget.device.addListener(_deviceChanged);
     WidgetsBinding.instance.addObserver(this);
     c.startClock();
-    _clockEvents = widget.device.clockChanges.listen(
-      (_) => c.refresh(),
-      onError: (Object _) {},
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      if (mounted &&
+          (lifecycle == null || lifecycle == AppLifecycleState.resumed)) {
+        c.prayerTimes?.resume(_explainLocation);
+      }
+    });
+    _clockEvents = widget.device.clockChanges.listen((_) {
+      c.prayerTimes?.clockChanged();
+      c.refresh();
+    }, onError: (Object _) {});
   }
 
   void _changed() {
@@ -69,7 +77,39 @@ class _CounterScreenState extends State<CounterScreen>
       _pulse.forward(from: 0);
     }
     _lastCount = c.count;
+    final message = c.prayerTimes?.message;
+    if (message != null && message != _lastPrayerMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _message(message);
+      });
+    }
+    _lastPrayerMessage = message;
     setState(() {});
+  }
+
+  Future<bool> _explainLocation() async {
+    if (!mounted) return false;
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            scrollable: true,
+            title: const Text('Local prayer times'),
+            content: const Text(
+              'Tasbih uses your location while the app is open to get today’s prayer times from AlAdhan. Only the coordinates used for the latest schedule are saved. Your location is never tracked in the background. You can continue with configured prayer times without granting access.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Use configured times'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   void _deviceChanged() {
@@ -80,8 +120,10 @@ class _CounterScreenState extends State<CounterScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       c.startClock();
+      c.prayerTimes?.resume(_explainLocation);
     } else {
       c.stopClock();
+      c.prayerTimes?.suspend();
       widget.device.cancelFeedback();
       unawaited(c.flush());
     }
@@ -91,6 +133,7 @@ class _CounterScreenState extends State<CounterScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     c.stopClock();
+    c.prayerTimes?.suspend();
     unawaited(_clockEvents?.cancel());
     c.removeListener(_changed);
     widget.device.removeListener(_deviceChanged);

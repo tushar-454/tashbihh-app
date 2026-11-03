@@ -11,6 +11,9 @@ dependencies:
   vibration: 3.2.1
   window_manager: 0.5.1
   web: 1.1.2
+  geolocator_android: 5.2.1
+  http: 1.6.0
+  timezone: 0.11.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
