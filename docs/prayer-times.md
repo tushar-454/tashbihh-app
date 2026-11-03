@@ -8,8 +8,8 @@ the project or its ancestor directories during implementation.
 
 1. Startup reads the last schedule from its own SharedPreferences key and reads
    the Android IANA timezone ID. Neither operation requests GPS or network access.
-2. Counters initialize immediately with today's valid cache or the existing
-   `assets/data/config.json` schedule. Network/GPS initialization starts after the
+2. Counters initialize immediately with today's valid cache, otherwise the last
+   compatible saved schedule, otherwise `assets/data/config.json`. Network/GPS initialization starts after the
    first screen frame and never blocks counting or Custom Mode.
 3. When today's schedule is missing, an explanation precedes the first Android
    foreground permission request. Existing grants skip the explanation/request.
@@ -38,6 +38,11 @@ the project or its ancestor directories during implementation.
 
 - The first screen and every foreground resume check today's cache before any
   permission, GPS, or API work. A valid cache causes no location/API request.
+- The refresh date is the device's local calendar date. Local 00:00 triggers the
+  next day's request while the app is open; UTC 00:00 is not a shared refresh
+  instant. Local timezone rules already account for positive/negative offsets
+  and daylight saving. When closed or suspended at midnight, the app checks and
+  fetches the current day immediately on its next launch/resume.
 - Existing counter timers schedule exact window boundaries and midnight. Their
   existing one-minute clock fallback only observes local time; it does not poll
   GPS or the API. A date/offset change triggers synchronization once.
@@ -66,13 +71,15 @@ the project or its ancestor directories during implementation.
 | Dhuhr | Dhuhr inclusive → Asr exclusive |
 | Asr | Asr inclusive → Maghrib exclusive |
 | Maghrib | Maghrib inclusive → Isha exclusive |
-| Isha | Isha → midnight; then midnight → the new day's known Fajr |
+| Isha | Isha → midnight; then midnight → saved Fajr |
 
-After midnight, early Isha is enabled only when the new day's valid schedule
-provides that morning's actual Fajr. If that data is unavailable, the **entire
-JSON fallback schedule** applies immediately. With the current JSON this means
-Isha is closed after midnight. Yesterday's synchronized times are never reused
-as today's schedule and tomorrow's Fajr is never estimated.
+After midnight, a refresh requests the new day's times. Until it succeeds,
+the last compatible saved schedule continues to control every prayer window,
+including Isha until its saved Fajr time. These older times are an offline
+fallback and may differ from today's actual times; their original date is kept
+so they never suppress the new day's refresh. Failed requests never replace the
+saved record. With no compatible saved schedule, the entire JSON fallback
+schedule applies; with the current JSON, Isha is closed after midnight.
 
 JSON format and all JSON values are unchanged. Its existing end grace still
 applies in fallback mode. Synchronized ends are canonical boundaries: grace
@@ -80,11 +87,13 @@ does not extend Fajr beyond Sunrise or overlap the next prayer. Custom Mode,
 saved settings, counting data, backup behavior, streaks, and existing daily
 progress rollover rules are preserved.
 
-Today's valid cache works offline across restarts without location access. A
-missing, corrupted, previous-day, future-synchronized, wrong-calculation, or
-timezone-incompatible record falls back to JSON. A small snackbar describes
-failures; permission denials include the Android Settings path. No failure
-prevents the app from functioning.
+Today's valid cache works offline across restarts without location access and
+without further API calls. An older saved record also works offline or with
+location permission denied, while remaining due for refresh. Missing, corrupted,
+future-dated, future-synchronized, wrong-calculation, or timezone-incompatible
+records fall back to JSON. A small snackbar identifies the saved schedule's date
+or configured fallback on failure; permission denials include the Android
+Settings path. No failure prevents the app from functioning.
 
 ## Files and dependencies
 
@@ -130,10 +139,14 @@ automated tests. See [AlAdhan's API documentation](https://aladhan.com/prayer-ti
 ## Verification
 
 - `flutter analyze`: passed with no issues.
-- `flutter test`: all 149 tests passed, including 57 prayer-time tests and the
-  existing counting, streak, backup, layout, and visual capture tests.
-- `flutter build apk --debug`: passed.
-- `flutter build apk --release`: passed; output is
+- `flutter test --no-pub`: all 217 tests passed after the saved-schedule fallback
+  update, covering local midnight in positive/negative UTC offsets, daily API
+  deduplication, persisted restart behavior, permission denial, failed refreshes,
+  cache replacement, and existing counting, streak, backup, and layout behavior.
+- The following APK/manifest checks were performed for the initial daily-sync
+  implementation; APK builds were not repeated for the saved-schedule update.
+- `flutter build apk --debug`: passed during initial implementation.
+- `flutter build apk --release`: passed during initial implementation; output is
   `build/app/outputs/flutter-apk/app-release.apk`.
 - Inspected the merged release manifest and APK permissions: internet, coarse
   location, and fine location are present; background location is absent.

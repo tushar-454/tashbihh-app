@@ -12,10 +12,15 @@ if (keystorePropertiesFile.isFile) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
-// CI uses environment variables; local builds can use ignored key.properties.
+// Select one complete source. Partial CI credentials must never pick up values
+// (including a different keystore or alias) from a local key.properties file.
+val signingEnvironment = listOf(
+    "ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD",
+)
+val usesSigningEnvironment = signingEnvironment.any { System.getenv(it) != null }
 fun signingValue(environment: String, property: String): String? =
-    System.getenv(environment)?.takeIf { it.isNotEmpty() }
-        ?: keystoreProperties.getProperty(property)?.takeIf { it.isNotEmpty() }
+    (if (usesSigningEnvironment) System.getenv(environment)
+     else keystoreProperties.getProperty(property))?.takeIf { it.isNotEmpty() }
 
 val releaseStoreFile = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
 val releaseStorePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")

@@ -132,10 +132,34 @@ def plan():
 
 
 def certificate_fingerprint(value):
-    normalized = value.replace(":", "").strip().lower()
+    normalized = re.sub(r"\s+", "", value.replace(":", "")).lower()
     if not re.fullmatch(r"[0-9a-f]{64}", normalized):
-        raise ValueError("ANDROID_SIGNING_CERT_SHA256 must be the 64-digit SHA-256 certificate fingerprint (colons optional).")
+        raise ValueError("Expected a 64-digit SHA-256 certificate fingerprint (colons and whitespace optional); check ANDROID_SIGNING_CERT_SHA256.")
     return normalized
+
+
+def keystore_fingerprint():
+    # Export only the public leaf certificate for the exact alias Gradle uses.
+    # A file avoids hashing JVM warnings that can appear on keytool's stdout.
+    with tempfile.TemporaryDirectory(prefix="android-certificate-") as directory:
+        certificate = Path(directory) / "certificate.der"
+        result = subprocess.run([
+            "keytool", "-exportcert", "-keystore", os.environ["ANDROID_KEYSTORE_PATH"],
+            "-storepass:env", "ANDROID_KEYSTORE_PASSWORD", "-alias", os.environ["ANDROID_KEY_ALIAS"],
+            "-file", str(certificate),
+        ], capture_output=True, check=False)
+        if result.returncode or not certificate.is_file() or not certificate.stat().st_size:
+            raise ValueError("Cannot read signing certificate. Check ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS.")
+        return hashlib.sha256(certificate.read_bytes()).hexdigest()
+
+
+def verify_keystore_certificate(expected):
+    actual = keystore_fingerprint()
+    print(f"Keystore alias certificate SHA-256: {actual}")
+    if actual != expected:
+        raise ValueError("Keystore certificate does not match ANDROID_SIGNING_CERT_SHA256. "
+                         "Confirm the existing production keystore and alias, then follow "
+                         "docs/android-releases.md to correct the certificate pin. Do not replace the key.")
 
 
 def signing():
@@ -155,14 +179,7 @@ def signing():
     with keystore.open("wb") as output:
         keystore.chmod(0o600)
         output.write(data)
-    cert = subprocess.run([
-        "keytool", "-exportcert", "-keystore", str(keystore),
-        "-storepass:env", "ANDROID_KEYSTORE_PASSWORD", "-alias", os.environ["ANDROID_KEY_ALIAS"],
-    ], capture_output=True, check=False)
-    if cert.returncode or not cert.stdout:
-        raise ValueError("Cannot read signing certificate. Check ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS.")
-    if hashlib.sha256(cert.stdout).hexdigest() != expected:
-        raise ValueError("Keystore certificate does not match ANDROID_SIGNING_CERT_SHA256. Restore the original signing secrets; do not rotate the app's key.")
+    verify_keystore_certificate(expected)
     print("Production keystore and pinned certificate verified. Key password will also be checked during signing.")
 
 
@@ -177,11 +194,43 @@ def sdk_tool(name):
     return str(max(candidates, key=lambda p: tuple(map(int, p.parent.name.split(".")))))
 
 
+def verify_apk_certificate(apk, expected_fingerprint):
+    expected = certificate_fingerprint(expected_fingerprint)
+    tool = sdk_tool("apksigner")
+    verified = run(tool, "verify", "--verbose", "--print-certs", str(apk)).replace("\r\n", "\n")
+    # This report contains public certificates/digests only, never keystore data.
+    print(f"apksigner report ({tool}) for {Path(apk).name}:\n{verified}")
+    # v3.1 prints SDK-range signers rather than "Signer #1". Every range must
+    # use the pinned certificate; never deduplicate numbered signers to hide extras.
+    counts = re.findall(r"^Number of signers:[ \t]*(\d+)[ \t]*$", verified, re.MULTILINE)
+    if counts != ["1"]:
+        raise ValueError("APK must have exactly one signer; apksigner reported "
+                         + (", ".join(counts) if counts else "no signer count") + ".")
+    certificates = re.findall(
+        r"^(Signer[^\r\n]*?) certificate SHA-256 digest:[ \t]*([^\r\n]*)$",
+        verified, re.MULTILINE,
+    )
+    numbered = [label for label, _ in certificates if re.fullmatch(r"Signer #\d+", label)]
+    ranged = [label for label, _ in certificates if re.fullmatch(
+        r"Signer \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\)", label)]
+    if not certificates or not (numbered == ["Signer #1"] and len(certificates) == 1
+                                or len(ranged) == len(certificates)):
+        raise ValueError("Cannot identify exactly one APK signer from apksigner certificate output; "
+                         "multiple or unrecognized signer records. Refusing publication.")
+    fingerprints = [certificate_fingerprint(value) for _, value in certificates]
+    print(f"APK {Path(apk).name} certificate SHA-256: {', '.join(fingerprints)}")
+    print(f"Pinned production certificate SHA-256: {expected}")
+    if any(value != expected for value in fingerprints):
+        debug = bool(re.search(r"^Signer[^\r\n]* certificate DN:.*CN=Android Debug(?:,|$)",
+                               verified, re.MULTILINE))
+        raise ValueError("APK signer does not match the pinned production certificate. "
+                         + ("APK certificate identifies itself as Android Debug. " if debug else "")
+                         + "Check the release signing configuration, alias and stale APK outputs. "
+                         "Do not change the pin to match an unintended APK.")
+
+
 def verify_apk(apk, version_code, version_name, expected_fingerprint):
-    verified = run(sdk_tool("apksigner"), "verify", "--verbose", "--print-certs", str(apk))
-    fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", verified)
-    if [value.lower() for value in fingerprints] != [certificate_fingerprint(expected_fingerprint)]:
-        raise ValueError("APK signer does not match the pinned production certificate, or APK has multiple signers.")
+    verify_apk_certificate(apk, expected_fingerprint)
     metadata = run(sdk_tool("aapt"), "dump", "badging", str(apk))
     package = re.search(r"^package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", metadata, re.MULTILINE)
     if not package or package.groups() != (APPLICATION_ID, str(version_code), version_name):
@@ -197,6 +246,7 @@ def verify_apk(apk, version_code, version_name, expected_fingerprint):
 
 
 def verify():
+    verify_keystore_certificate(certificate_fingerprint(os.environ["ANDROID_SIGNING_CERT_SHA256"]))
     verify_apk(APK_PATH, os.environ["VERSION_CODE"], os.environ["VERSION_NAME"],
                os.environ["ANDROID_SIGNING_CERT_SHA256"])
     previous = os.environ.get("PREVIOUS_TAG", "")
@@ -208,11 +258,11 @@ def verify():
             with tempfile.TemporaryDirectory(prefix="previous-android-", dir=os.environ["RUNNER_TEMP"]) as directory:
                 run("gh", "release", "download", previous, "--pattern", "*.apk", "--dir", directory)
                 for old_apk in Path(directory).glob("*.apk"):
-                    old_signature = run(sdk_tool("apksigner"), "verify", "--print-certs", str(old_apk))
-                    expected = certificate_fingerprint(os.environ["ANDROID_SIGNING_CERT_SHA256"])
-                    old_fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", old_signature)
-                    if [value.lower() for value in old_fingerprints] != [expected]:
-                        raise ValueError("The previous release APK uses a different signing key. Restore that original key to preserve installed app updates and data.")
+                    try:
+                        verify_apk_certificate(old_apk, os.environ["ANDROID_SIGNING_CERT_SHA256"])
+                    except ValueError as error:
+                        raise ValueError("The previous release APK has a different signing key or invalid signer records. "
+                                         "Restore that original key to preserve installed app updates and data.") from error
                     metadata = run(sdk_tool("aapt"), "dump", "badging", str(old_apk))
                     old_code = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", metadata, re.MULTILINE)
                     if not old_code or old_code[1] != APPLICATION_ID:

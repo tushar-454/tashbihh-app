@@ -99,7 +99,7 @@ class PrayerLocation {
     }
     if (permission != PrayerLocationAccess.granted) {
       throw const PrayerLocationException(
-        'Using configured prayer times. To enable location, open Android Settings → Apps → Tasbih Counter → Permissions → Location and allow access while using the app.',
+        'To enable location, open Android Settings → Apps → Tasbih Counter → Permissions → Location and allow access while using the app.',
       );
     }
   }

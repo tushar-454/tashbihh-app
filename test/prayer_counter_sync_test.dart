@@ -150,7 +150,7 @@ void main() {
   );
 
   test(
-    'unavailable next-day Fajr uses complete JSON fallback at midnight',
+    'failed midnight refresh keeps counters on saved times until recovery',
     () async {
       h.now = DateTime(2026, 11, 3, 23);
       await h.sync.load();
@@ -160,14 +160,22 @@ void main() {
       h.api.error = StateError('offline');
       h.now = DateTime(2026, 11, 4);
       controller.refresh();
-      expect(controller.schedule, same(h.config.schedule));
-      expect(controller.activePrayer, isNull);
+      expect(controller.schedule, isNot(same(h.config.schedule)));
+      expect(controller.activePrayer, 'isha');
       await h.sync.synchronize();
-      expect(controller.schedule, same(h.config.schedule));
+      expect(controller.schedule, isNot(same(h.config.schedule)));
       expect(h.sync.cached!.date, '2026-11-03');
       h.now = DateTime(2026, 11, 4, 4, 45);
       controller.refresh();
+      expect(controller.activePrayer, 'isha');
+      h.now = DateTime(2026, 11, 4, 4, 48);
+      controller.refresh();
       expect(controller.activePrayer, 'fajr');
+      expect(controller.canCount, isTrue);
+      h.api.error = null;
+      await h.start();
+      expect(h.sync.cached!.date, '2026-11-04');
+      expect(h.api.calls, 3);
     },
   );
 

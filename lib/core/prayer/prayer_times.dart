@@ -170,9 +170,19 @@ class PrayerTimes {
   }
 
   bool validFor(DateTime local, String deviceZone, PrayerCalculation settings) {
+    return date == dateKey(local) && canReuseFor(local, deviceZone, settings);
+  }
+
+  /// Old civil times remain an offline fallback, but never count as a successful
+  /// sync for a new day. Reject future records and incompatible timezone/settings.
+  bool canReuseFor(
+    DateTime local,
+    String deviceZone,
+    PrayerCalculation settings,
+  ) {
     final zoned = tz.TZDateTime.from(local, _zone(timezone));
-    return date == dateKey(local) &&
-        date == dateKey(zoned) &&
+    return date.compareTo(dateKey(local)) <= 0 &&
+        dateKey(local) == dateKey(zoned) &&
         deviceTimezone == deviceZone &&
         utcOffsetMinutes == local.timeZoneOffset.inMinutes &&
         zoned.timeZoneOffset == local.timeZoneOffset &&
@@ -246,6 +256,7 @@ class PrayerTimes {
         ),
     ], earlyIshaEnd: times['Fajr']);
     // Synchronized ends are canonical boundaries (especially Sunrise).
+    // The same windows apply when these saved civil times are used offline.
     // Configured grace remains in effect for the JSON fallback schedule.
   }
 }

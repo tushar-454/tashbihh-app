@@ -61,9 +61,14 @@ class PrayerTimeSync extends ChangeNotifier {
 
   PrayerSchedule scheduleFor(DateTime now) =>
       _deviceZone != null &&
-          _cached?.validFor(now, _deviceZone!, calculation) == true
+          _cached?.canReuseFor(now, _deviceZone!, calculation) == true
       ? _cachedSchedule!
       : config.schedule;
+
+  String get _fallbackMessage =>
+      identical(scheduleFor(clock()), config.schedule)
+      ? 'Using configured prayer times.'
+      : 'Using saved prayer times from ${_cached!.date}.';
 
   void resume(LocationExplanation explain) {
     if (_disposed) return;
@@ -142,7 +147,7 @@ class PrayerTimeSync extends ChangeNotifier {
       if (!_foreground || _disposed) return;
       if (!await location.gateway.servicesEnabled()) {
         throw const PrayerLocationException(
-          'Using configured prayer times. Turn on device Location in Android Settings to get local prayer times.',
+          'Turn on device Location in Android Settings to get local prayer times.',
         );
       }
       if (!_foreground || _disposed) return;
@@ -181,12 +186,12 @@ class PrayerTimeSync extends ChangeNotifier {
       message = null;
       notifyListeners();
     } on PrayerLocationException catch (error) {
-      _setMessage(error.message);
+      _setMessage('$_fallbackMessage ${error.message}');
       // Denials/GPS disabled retry on foreground resume or a new date only.
     } catch (_) {
       if (!_disposed && _foreground) {
         _setMessage(
-          'Local prayer times are unavailable. Using configured times; automatic synchronization will retry later.',
+          'Local prayer times are unavailable. $_fallbackMessage Automatic synchronization will retry later.',
         );
         _scheduleRetry();
       }

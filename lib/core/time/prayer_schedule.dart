@@ -18,15 +18,14 @@ class PrayerSchedule {
   final List<PrayerDefinition> prayers;
   final int endGraceMinutes;
 
-  /// Only set for today's synchronized schedule. Early Isha ends at TODAY'S
-  /// known Fajr. At midnight the resolver requires the NEW day's schedule;
-  /// without it the complete JSON schedule is used, never yesterday's Fajr.
+  /// Set for API schedules. Early Isha ends at the saved Fajr time, using the
+  /// last available schedule until the current day's synchronization succeeds.
   final int? earlyIshaEnd;
 
   String windowLabel(String id) {
     final prayer = prayers.firstWhere((p) => p.id == id);
     return id == 'isha' && earlyIshaEnd != null
-        ? '${prayer.windowLabel.split(' – ').first} – next Fajr (configured fallback if unavailable)'
+        ? '${prayer.windowLabel.split(' – ').first} – next Fajr (saved times if offline)'
         : prayer.windowLabel;
   }
 

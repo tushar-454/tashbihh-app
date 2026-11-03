@@ -86,7 +86,8 @@ registration; see [Google Drive configuration](google-drive-backup.md).
 
 Enable Actions under **Settings → Actions → General**. If action restrictions are
 enabled, allow `actions/checkout`, `actions/setup-java`, and
-`subosito/flutter-action`. Repository/organization policy must permit this
+`subosito/flutter-action`, plus `actions/upload-artifact` for failed-verification
+diagnostics. Repository/organization policy must permit this
 workflow's explicit `contents: write` permission. The default repository token
 setting can stay read-only; the release job requests the write permission it
 needs. No personal access token or PR approval permission is needed. If tag
@@ -175,6 +176,19 @@ ID, version and non-debuggable mode; ZIP inspection verifies ARMv7/ARM64/x86_64
 Flutter and app libraries. The prior release APK, if present, must have the same
 certificate and a lower versionCode.
 
+Signing validation and final APK verification both export the public leaf
+certificate from the configured keystore and alias, and hash its DER bytes.
+The build and verification steps explicitly receive the same keystore path and
+alias. The verifier accepts upper/lowercase hex, colons and whitespace, then
+requires exactly 64 hex digits. It requires one APK signer and a matching
+certificate in every reported SDK range. Public key digests and source-stamp
+certificates are separate identities and are not accepted as APK signer digests.
+
+Both numbered and v3.1 SDK-range labels are supported. Android's
+[apksigner implementation](https://android.googlesource.com/platform/tools/apksig/+/refs/heads/main/src/apksigner/java/com/android/apksigner/ApkSignerTool.java)
+prints SDK ranges instead of `Signer #1` for v3.1 signatures. The former
+numbered-only regex could report a signer mismatch with no parsed certificates.
+
 Only then does GitHub generate PR release notes, supplemented with every commit
 since the previous release, including direct pushes. The workflow creates a new
 draft, uploads the APK/checksum, checks asset upload state and size, then
@@ -197,7 +211,9 @@ keyPassword=YOUR_KEY_PASSWORD
 
 Use Java properties escaping for backslashes/special characters. Alternatively,
 set `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and
-`ANDROID_KEY_PASSWORD`; environment values take precedence. Relative store paths
+`ANDROID_KEY_PASSWORD`. If any signing environment variable is present, all four
+must be provided; Gradle never mixes partial environment credentials with local
+properties. Relative store paths
 resolve from `android/`. Debug builds do not need any of these values.
 
 ```sh
@@ -210,7 +226,102 @@ flutter build apk --release --build-name 1.0.23 --build-number 23
 Do not manually distribute a versionCode that CI might reuse; update the
 repository floor first if you distribute builds outside this workflow.
 
-## Local validation performed
+## Diagnose an APK signer verification failure
+
+Do not replace the signing key or change the certificate pin to match an
+unintended APK. If the initial **Validate production signing secrets** step
+passes, the selected keystore alias already matched the pin in that run. That
+alone does not prove the final APK was signed with it.
+
+In **Actions → Android APK Release → release**, inspect the final verification
+step. It prints the configured keystore certificate SHA-256, the APK's public
+`apksigner verify --verbose --print-certs` report, and the expected pin. Passwords,
+keystore Base64 and private keys are never printed. The APK digest must match
+both the keystore certificate digest and the pin after normalization. A
+`CN=Android Debug` certificate is evidence of a debug signing identity; check
+the actual certificate digest rather than relying only on its name.
+
+If verification fails, the workflow retains only the APK as an artifact named
+`unverified-android-apk-RUN_ID-ATTEMPT` for three days. This is a diagnostic
+artifact, not a published release. Download it from that run's Artifacts section
+and run this in a terminal on your computer (adjust SDK version and APK path):
+
+```sh
+"$HOME/Android/Sdk/build-tools/36.0.0/apksigner" verify --verbose --print-certs \
+  /path/to/downloaded/app-release.apk
+```
+
+If the pin really is wrong, derive the correct value from the **existing
+production keystore and exact release alias**, not from a debug APK, a public
+key digest, the keystore file hash or a Google Play certificate for another key.
+This command prompts for the keystore password and displays only public
+certificate information:
+
+```sh
+keytool -list -v -keystore /absolute/path/to/existing-production.jks \
+  -alias YOUR_EXISTING_RELEASE_ALIAS
+```
+
+Copy only its **SHA256** fingerprint into repository secret
+`ANDROID_SIGNING_CERT_SHA256`. Colons, letter case and whitespace are normalized.
+To avoid locale-dependent field names or copying, this Bash/zsh command exports
+only the public certificate, computes the digest, and uploads it via stdin.
+Replace the keystore path and alias first. Never enable shell tracing:
+
+```sh
+(
+  set -eu
+  umask 077
+  cert_dir=$(mktemp -d)
+  trap 'rm -rf -- "$cert_dir"' EXIT
+  keytool -exportcert -keystore /absolute/path/to/existing-production.jks \
+    -alias YOUR_EXISTING_RELEASE_ALIAS -file "$cert_dir/certificate.der"
+  python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' \
+    "$cert_dir/certificate.der" > "$cert_dir/fingerprint.txt"
+  gh secret set ANDROID_SIGNING_CERT_SHA256 --repo tushar-454/tashbihh-app \
+    < "$cert_dir/fingerprint.txt"
+)
+```
+
+Do not regenerate or upload the keystore, or change its alias/passwords, merely
+to correct this certificate fingerprint.
+
+### Investigation of run 41625319049
+
+The [failed run](https://github.com/tushar-454/tashbihh-app/actions/runs/41625319049)
+at commit `64449858bddc540e0937a0993ddb6c179fba55cf` passed the keystore/pin
+comparison and built version `1.0.2`/code `2`. It logged neither the APK's
+certificate report nor parsed digests, and retained no APK artifact. Therefore
+the actual CI APK's signing identity and the exact failure cause cannot be
+determined from that run. A new CI run must confirm the three-way certificate
+comparison; the local parser fixes do not establish CI success.
+
+The existing local Flutter output APK is version `1.0.0`/code `1` with an Android
+Debug certificate. The separate Gradle output APK is version `1.0.42`/code `42`
+with a prior local validation certificate. Neither is the failed CI artifact.
+No production keystore is available locally, and no new key was generated for
+this investigation.
+
+## Validation of the signing verification changes
+
+- All 40 release automation tests pass, including normalized fingerprints,
+  numbered/SDK-range signer formats, multiple-signer rejection, mismatched keys,
+  malformed digests, keytool failures and secret-safe diagnostics.
+- `actionlint` and `git diff --check` pass.
+- The two existing local APKs pass signature, identity, version, release-mode
+  and universal-ABI checks against their own known public certificates; the
+  stale debug APK is rejected against the other certificate.
+- The real keytool export helper was exercised against the existing local debug
+  keystore. This does not validate the unavailable production keystore.
+- Gradle's release configuration selects the supplied keystore, alias and
+  credentials, checked with the existing debug key as a configuration fixture
+  without building an APK. Missing or partial release credentials are rejected;
+  the debug task graph succeeds without signing credentials.
+
+These checks do not verify the CI-signed production APK. No key was generated,
+secret changed, APK re-signed or GitHub release published in this investigation.
+
+## Initial release setup validation (historical)
 
 Validated with Flutter 3.47.9/Dart 3.13.7 and the installed Java 21 runtime:
 
@@ -223,8 +334,8 @@ Validated with Flutter 3.47.9/Dart 3.13.7 and the installed Java 21 runtime:
 - Debug task configuration was checked without release credentials.
 
 The validation key was deleted and the pre-existing Flutter release APK restored.
-No GitHub release was published. CI uses Java 17, the documented AGP requirement;
-the first hosted run still requires your permanent signing secrets.
+No GitHub release was published during that initial validation. CI uses Java 17,
+the documented AGP requirement.
 
 References: [Flutter Android signing](https://docs.flutter.dev/deployment/android),
 [AGP 9.1 compatibility](https://developer.android.com/build/releases/agp-9-1-0-release-notes),

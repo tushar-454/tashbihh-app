@@ -160,6 +160,65 @@ void main() {
       expect(times.date, '2026-11-03');
     },
   );
+  test('old cache can be reused only with compatible clocks and settings', () {
+    final times = dailyTimes(now, zone);
+    final tomorrow = DateTime(2026, 11, 4, 12);
+    expect(
+      times.canReuseFor(tomorrow, zone, const PrayerCalculation()),
+      isTrue,
+    );
+    expect(times.validFor(tomorrow, zone, const PrayerCalculation()), isFalse);
+    expect(
+      times.canReuseFor(tomorrow, 'Changed/Zone', const PrayerCalculation()),
+      isFalse,
+    );
+    expect(
+      times.canReuseFor(tomorrow, zone, const PrayerCalculation(method: 3)),
+      isFalse,
+    );
+    expect(
+      times.canReuseFor(
+        now.subtract(const Duration(days: 1)),
+        zone,
+        const PrayerCalculation(),
+      ),
+      isFalse,
+    );
+  });
+
+  for (final zoneName in ['Asia/Dhaka', 'America/New_York']) {
+    test('daily freshness changes at local midnight in $zoneName', () {
+      final location = tz.getLocation(zoneName);
+      final before = tz.TZDateTime(location, 2026, 11, 3, 23, 59, 59);
+      final midnight = tz.TZDateTime(location, 2026, 11, 4);
+      final times = dailyTimes(before, zoneName);
+      expect(
+        times.validFor(before, zoneName, const PrayerCalculation()),
+        isTrue,
+      );
+      expect(
+        times.validFor(midnight, zoneName, const PrayerCalculation()),
+        isFalse,
+      );
+      expect(
+        times.canReuseFor(midnight, zoneName, const PrayerCalculation()),
+        isTrue,
+      );
+      expect(PrayerTimes.apiDate(midnight), '04-11-2026');
+      final utcMidnight = tz.TZDateTime.from(
+        DateTime.utc(2026, 11, 4),
+        location,
+      );
+      expect(
+        dailyTimes(
+          tz.TZDateTime(location, 2026, 11, 3),
+          zoneName,
+        ).validFor(utcMidnight, zoneName, const PrayerCalculation()),
+        zoneName == 'America/New_York',
+      );
+    });
+  }
+
   test('same-date daylight saving offset change invalidates cached times', () {
     final ny = tz.getLocation('America/New_York');
     final before = tz.TZDateTime(ny, 2026, 11, 1, 0, 30);
@@ -171,6 +230,14 @@ void main() {
     );
     expect(
       schedule.validFor(after, 'America/New_York', const PrayerCalculation()),
+      isFalse,
+    );
+    expect(
+      schedule.canReuseFor(
+        after,
+        'America/New_York',
+        const PrayerCalculation(),
+      ),
       isFalse,
     );
   });

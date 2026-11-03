@@ -52,7 +52,7 @@ void main() {
   });
 
   test(
-    'yesterday cache never overrides JSON; offline failure never overwrites it',
+    'yesterday cache remains available offline without being marked fresh',
     () async {
       await h.repository.save(
         dailyTimes(h.now.subtract(const Duration(days: 1)), h.zone),
@@ -60,11 +60,13 @@ void main() {
       final previous = h.store.value;
       h.api.error = StateError('offline');
       await h.sync.load();
-      expect(h.sync.scheduleFor(h.now), same(h.config.schedule));
+      expect(h.sync.scheduleFor(h.now), isNot(same(h.config.schedule)));
       await h.start();
-      expect(h.sync.scheduleFor(h.now), same(h.config.schedule));
+      expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'dhuhr');
+      expect(h.api.calls, 1);
       expect(h.store.value, previous);
-      expect(h.sync.message, contains('configured'));
+      expect(h.sync.cached!.date, '2026-11-02');
+      expect(h.sync.message, contains('saved prayer times from 2026-11-02'));
     },
   );
 
@@ -239,19 +241,26 @@ void main() {
   );
 
   test(
-    'midnight invalidates cache immediately and synchronizes new day',
+    'midnight keeps saved times while synchronizing the new day once',
     () async {
       h.now = DateTime(2026, 11, 3, 23, 59);
       await h.sync.load();
       await h.start();
       expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'isha');
       h.now = DateTime(2026, 11, 4);
-      expect(h.sync.scheduleFor(h.now), same(h.config.schedule));
+      expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'isha');
       h.sync.observeClock(h.now);
       await h.sync.synchronize();
       expect(h.api.calls, 2);
       expect(h.sync.cached!.date, '2026-11-04');
       expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'isha');
+      for (var hour = 1; hour < 24; hour++) {
+        h.now = DateTime(2026, 11, 4, hour);
+        h.sync.observeClock(h.now);
+        await h.start();
+      }
+      expect(h.api.calls, 2);
+      expect(h.store.writes, hasLength(2));
     },
   );
 
@@ -296,9 +305,74 @@ void main() {
     await h.start();
     expect(h.store.value, previous);
     expect(h.sync.cached!.date, '2026-11-02');
-    expect(h.sync.scheduleFor(h.now), same(h.config.schedule));
+    expect(h.sync.scheduleFor(h.now), isNot(same(h.config.schedule)));
     h.store.fail = false;
     await h.start();
     expect((await PrayerTimesRepository(h.store).load())!.date, '2026-11-03');
   });
+
+  test(
+    'restart reuses saved times with denied permission and no API call',
+    () async {
+      await h.repository.save(
+        dailyTimes(h.now.subtract(const Duration(days: 3)), h.zone),
+      );
+      h.gps.access = PrayerLocationAccess.permanentlyDenied;
+      await h.sync.load();
+      await h.start();
+      expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'dhuhr');
+      expect(h.gps.positions, 0);
+      expect(h.api.calls, 0);
+      expect(h.sync.message, contains('saved prayer times from 2026-10-31'));
+      expect(h.sync.message, contains('Android Settings'));
+    },
+  );
+
+  test(
+    'successful refresh replaces old times and restart skips the API',
+    () async {
+      final oldTimes = dailyTimes(
+        h.now.subtract(const Duration(days: 1)),
+        h.zone,
+      );
+      await h.repository.save(
+        PrayerTimes.fromJson({
+          ...oldTimes.toJson(),
+          'times': {...oldTimes.times, 'Dhuhr': 730},
+        }),
+      );
+      await h.sync.load();
+      expect(h.sync.scheduleFor(h.now).activePrayer(h.now), isNull);
+      await h.start();
+      expect(h.sync.scheduleFor(h.now).activePrayer(h.now), 'dhuhr');
+      final restarted = SyncHarness();
+      addTearDown(restarted.sync.dispose);
+      restarted.store.value = h.store.value;
+      restarted.gps.access = PrayerLocationAccess.permanentlyDenied;
+      await restarted.sync.load();
+      await restarted.start();
+      expect(restarted.sync.cached!.date, '2026-11-03');
+      expect(
+        restarted.sync.scheduleFor(restarted.now).activePrayer(restarted.now),
+        'dhuhr',
+      );
+      expect(restarted.api.calls, 0);
+      expect(restarted.gps.checks, 0);
+    },
+  );
+
+  test(
+    'missing or corrupt cache with denied permission uses configured times',
+    () async {
+      h.gps.access = PrayerLocationAccess.permanentlyDenied;
+      for (final raw in [null, 'broken JSON']) {
+        h.store.value = raw;
+        await h.sync.load();
+        await h.start();
+        expect(h.sync.scheduleFor(h.now), same(h.config.schedule));
+        expect(h.sync.message, contains('Using configured prayer times'));
+      }
+      expect(h.api.calls, 0);
+    },
+  );
 }

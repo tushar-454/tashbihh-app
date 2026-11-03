@@ -67,15 +67,13 @@ jobs:
           java-version: '17'
       - name: Validate production signing secrets
         env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/android-release.jks
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_SIGNING_CERT_SHA256: ${{ secrets.ANDROID_SIGNING_CERT_SHA256 }}
-        run: |
-          export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/android-release.jks"
-          echo "ANDROID_KEYSTORE_PATH=$ANDROID_KEYSTORE_PATH" >> "$GITHUB_ENV"
-          python3 tool/android_release.py signing
+        run: python3 tool/android_release.py signing
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -93,20 +91,36 @@ jobs:
           flutter test
       - name: Build one universal signed release APK
         env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/android-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          # Verification must inspect output from this invocation, never a stale APK.
+          rm -f -- build/app/outputs/flutter-apk/app-release.apk \
+            build/app/outputs/apk/release/app-release.apk
           # Keep normal pub/tooling regeneration: this SDK's --no-pub path can
           # leave integration_test in the generated release plugin registrant.
           flutter build apk --release \
             --build-name "$VERSION_NAME" \
             --build-number "$VERSION_CODE"
       - name: Verify signature, identity, version, and universal APK contents
+        id: verify_apk
         env:
           GH_TOKEN: ${{ github.token }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/android-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_SIGNING_CERT_SHA256: ${{ secrets.ANDROID_SIGNING_CERT_SHA256 }}
         run: python3 tool/android_release.py verify
+      - name: Retain APK for failed verification diagnosis
+        if: failure() && steps.verify_apk.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unverified-android-apk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 3
       - name: Publish a new release with APK and changelog
         env:
           GH_TOKEN: ${{ github.token }}

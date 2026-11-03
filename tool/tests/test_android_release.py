@@ -1,7 +1,9 @@
 """Release safety regressions; no GitHub requests or production signing keys."""
 
 import importlib.util
+import base64
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -148,13 +150,17 @@ class ReleaseSafetyTests(unittest.TestCase):
                 release.signing()
 
     def test_fingerprint_format(self):
-        self.assertEqual(release.certificate_fingerprint("AA:" * 31 + "AA"), "aa" * 32)
-        with self.assertRaisesRegex(ValueError, "64-digit"):
-            release.certificate_fingerprint("invalid")
+        for value in ("aa" * 32, "AA:" * 31 + "AA", " \t" + "AA: \n" * 31 + "AA\r\n"):
+            with self.subTest(value=value):
+                self.assertEqual(release.certificate_fingerprint(value), "aa" * 32)
+        for value in ("invalid", "aa" * 31, "aa" * 33, "aa" * 32 + "garbage",
+                      "SHA256: " + "aa" * 32, "aa-" * 31 + "aa", "gg" * 32):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, "64-digit"):
+                release.certificate_fingerprint(value)
 
     def test_apk_rejects_wrong_identity_signer_version_or_missing_abi(self):
         fingerprint = "ab" * 32
-        signature = f"Signer #1 certificate SHA-256 digest: {fingerprint}"
+        signature = f"Number of signers: 1\nSigner #1 certificate SHA-256 digest: {fingerprint}"
         metadata = "package: name='com.example.tashbihh' versionCode='12' versionName='1.0.12'"
         with tempfile.TemporaryDirectory() as directory:
             apk = Path(directory) / "app.apk"
@@ -182,7 +188,7 @@ class ReleaseSafetyTests(unittest.TestCase):
 
     def test_previous_apk_blocks_key_rotation_and_version_downgrades(self):
         fingerprint = "ab" * 32
-        signature = f"Signer #1 certificate SHA-256 digest: {fingerprint}"
+        signature = f"Number of signers: 1\nSigner #1 certificate SHA-256 digest: {fingerprint}"
         with tempfile.TemporaryDirectory() as directory:
             env = {"RUNNER_TEMP": directory, "PREVIOUS_TAG": "android-v1.0.11",
                    "VERSION_CODE": "12", "VERSION_NAME": "1.0.12",
@@ -197,6 +203,7 @@ class ReleaseSafetyTests(unittest.TestCase):
                     return signature
                 return "package: name='com.example.tashbihh' versionCode='12'"
             with patch.dict(os.environ, env), patch.object(release, "verify_apk"), \
+                    patch.object(release, "verify_keystore_certificate"), \
                     patch.object(release, "sdk_tool", side_effect=lambda name: name), \
                     patch.object(release, "run", side_effect=response):
                 with self.assertRaisesRegex(ValueError, "ANDROID_VERSION_CODE_FLOOR"):
@@ -204,6 +211,171 @@ class ReleaseSafetyTests(unittest.TestCase):
                 with patch.dict(os.environ, {"ANDROID_SIGNING_CERT_SHA256": "cd" * 32}):
                     with self.assertRaisesRegex(ValueError, "different signing key"):
                         release.verify()
+
+
+class CertificateVerificationTests(unittest.TestCase):
+    fingerprint = "ab" * 32
+
+    def verify(self, output, expected=None):
+        with patch.object(release, "sdk_tool", return_value="apksigner"), \
+                patch.object(release, "run", return_value=output) as command:
+            release.verify_apk_certificate(Path("release.apk"), expected or self.fingerprint)
+        command.assert_called_once_with("apksigner", "verify", "--verbose", "--print-certs", "release.apk")
+
+    def test_numbered_signer_accepts_case_colons_and_whitespace(self):
+        output = ("Verifies\nNumber of signers: 1\n"
+                  + "Signer #1 certificate SHA-256 digest: \t" + "AB: " * 31 + "AB  \n")
+        for newline in ("\n", "\r\n"):
+            with self.subTest(newline=newline):
+                self.verify(output.replace("\n", newline), " \n" + "AB:" * 31 + "AB\t")
+
+    def test_v31_sdk_range_format_with_same_certificate(self):
+        # apksigner prints SDK ranges rather than numbered signers for v3.1.
+        for development in ("", " (dev release=true)"):
+            with self.subTest(development=development):
+                self.verify("Number of signers: 1\n"
+                            f"Signer (minSdkVersion=33{development}, maxSdkVersion=2147483647) certificate SHA-256 digest: {self.fingerprint}\n"
+                            f"Signer (minSdkVersion=28, maxSdkVersion=32) certificate SHA-256 digest: {self.fingerprint}\n")
+
+    def test_v31_different_certificate_in_any_range_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.verify("Number of signers: 1\n"
+                        f"Signer (minSdkVersion=33, maxSdkVersion=2147483647) certificate SHA-256 digest: {self.fingerprint}\n"
+                        f"Signer (minSdkVersion=28, maxSdkVersion=32) certificate SHA-256 digest: {'cd' * 32}\n")
+
+    def test_multiple_signers_rejected_even_with_same_certificate(self):
+        for count in (1, 2):
+            with self.subTest(count=count), self.assertRaises(ValueError):
+                self.verify(f"Number of signers: {count}\n"
+                            f"Signer #1 certificate SHA-256 digest: {self.fingerprint}\n"
+                            f"Signer #2 certificate SHA-256 digest: {self.fingerprint}\n")
+
+    def test_duplicate_signer_records_rejected(self):
+        with self.assertRaises(ValueError):
+            self.verify("Number of signers: 1\n"
+                        + f"Signer #1 certificate SHA-256 digest: {self.fingerprint}\n" * 2)
+
+    def test_missing_or_malformed_certificate_records_fail_closed(self):
+        for record in ("", f"Signer #1 public key SHA-256 digest: {self.fingerprint}",
+                       f"Signer #2 certificate SHA-256 digest: {self.fingerprint}",
+                       f"Signer unknown certificate SHA-256 digest: {self.fingerprint}",
+                       f"Signer #1 certificate SHA-256 digest: {self.fingerprint}junk",
+                       "Signer #1 certificate SHA-256 digest: ab:cd"):
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                self.verify("Number of signers: 1\n" + record)
+
+    def test_missing_or_conflicting_signer_count_rejected(self):
+        for counts in ("", "Number of signers: 0\n", "Number of signers: 2\n",
+                       "Number of signers: 1\nNumber of signers: 2\n"):
+            with self.subTest(counts=counts), self.assertRaises(ValueError):
+                self.verify(counts + f"Signer #1 certificate SHA-256 digest: {self.fingerprint}")
+
+    def test_source_stamp_and_public_key_are_not_apk_signers(self):
+        self.verify("Number of signers: 1\n"
+                    f"Signer #1 certificate SHA-256 digest: {self.fingerprint}\n"
+                    f"Signer #1 public key SHA-256 digest: {'cd' * 32}\n"
+                    f"Source Stamp Signer certificate SHA-256 digest: {'ef' * 32}\n")
+
+    def test_debug_certificate_mismatch_is_actionable(self):
+        with self.assertRaisesRegex(ValueError, "Android Debug"):
+            self.verify("Number of signers: 1\n"
+                        "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug\n"
+                        f"Signer #1 certificate SHA-256 digest: {'cd' * 32}")
+
+    def test_apksigner_failure_cannot_be_accepted(self):
+        with patch.object(release, "sdk_tool", return_value="apksigner"), \
+                patch.object(release, "run", side_effect=subprocess.CalledProcessError(1, ["apksigner"])):
+            with self.assertRaises(subprocess.CalledProcessError):
+                release.verify_apk_certificate(Path("release.apk"), self.fingerprint)
+
+    def test_current_apk_stops_before_metadata_on_bad_certificate(self):
+        with patch.object(release, "verify_apk_certificate", side_effect=ValueError("bad signer")) as verifier:
+            with self.assertRaisesRegex(ValueError, "bad signer"):
+                release.verify_apk(Path("current.apk"), "12", "1.0.12", self.fingerprint)
+        verifier.assert_called_once_with(Path("current.apk"), self.fingerprint)
+
+
+class KeystoreCertificateTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.keystore = Path(self.temp.name) / "release.jks"
+        self.certificate = b"public certificate fixture"
+        self.encoded = base64.b64encode(b"keystore fixture").decode()
+        self.env = {
+            "ANDROID_KEYSTORE_PATH": str(self.keystore),
+            "ANDROID_KEYSTORE_BASE64": self.encoded,
+            "ANDROID_KEYSTORE_PASSWORD": "store-password-do-not-log",
+            "ANDROID_KEY_ALIAS": "existing-production-alias",
+            "ANDROID_KEY_PASSWORD": "key-password-do-not-log",
+            "ANDROID_SIGNING_CERT_SHA256": hashlib.sha256(self.certificate).hexdigest(),
+        }
+        environment = patch.dict(os.environ, self.env, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def export_certificate(self, args, **kwargs):
+        self.assertEqual(args[:2], ["keytool", "-exportcert"])
+        self.assertEqual(args[args.index("-keystore") + 1], str(self.keystore))
+        self.assertEqual(args[args.index("-alias") + 1], self.env["ANDROID_KEY_ALIAS"])
+        self.assertIn("-storepass:env", args)
+        self.assertNotIn(self.env["ANDROID_KEYSTORE_PASSWORD"], args)
+        self.assertNotIn(self.env["ANDROID_KEY_PASSWORD"], args)
+        self.assertTrue(kwargs["capture_output"])
+        Path(args[args.index("-file") + 1]).write_bytes(self.certificate)
+        return subprocess.CompletedProcess(args, 0, stdout=b"JVM warning, not certificate bytes", stderr=b"")
+
+    def test_signing_decodes_wrapped_base64_and_hashes_exact_alias_certificate(self):
+        wrapped = " \n" + self.encoded[:8] + "\r\n" + self.encoded[8:] + "\t"
+        output = io.StringIO()
+        with patch.dict(os.environ, {"ANDROID_KEYSTORE_BASE64": wrapped}), \
+                patch.object(release.subprocess, "run", side_effect=self.export_certificate), \
+                patch("sys.stdout", output):
+            release.signing()
+        self.assertEqual(self.keystore.read_bytes(), b"keystore fixture")
+        self.assertEqual(self.keystore.stat().st_mode & 0o777, 0o600)
+        for key in ("ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_PASSWORD"):
+            self.assertNotIn(self.env[key], output.getvalue())
+        self.assertIn(self.env["ANDROID_SIGNING_CERT_SHA256"], output.getvalue())
+
+    def test_invalid_base64_does_not_reach_keytool(self):
+        with patch.dict(os.environ, {"ANDROID_KEYSTORE_BASE64": "invalid!!!"}), \
+                patch.object(release.subprocess, "run") as command:
+            with self.assertRaisesRegex(ValueError, "BASE64 is invalid"):
+                release.signing()
+        command.assert_not_called()
+
+    def test_wrong_pin_is_rejected_before_build(self):
+        with patch.dict(os.environ, {"ANDROID_SIGNING_CERT_SHA256": "cd" * 32}), \
+                patch.object(release.subprocess, "run", side_effect=self.export_certificate):
+            with self.assertRaisesRegex(ValueError, "Keystore certificate does not match"):
+                release.signing()
+
+    def test_keytool_failure_hides_output_and_passwords(self):
+        sensitive = " ".join(self.env.values()).encode()
+        failure = subprocess.CompletedProcess(["keytool"], 1, stdout=sensitive, stderr=sensitive)
+        with patch.object(release.subprocess, "run", return_value=failure):
+            with self.assertRaisesRegex(ValueError, "Cannot read signing certificate") as error:
+                release.keystore_fingerprint()
+        for key in ("ANDROID_KEYSTORE_BASE64", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_PASSWORD"):
+            self.assertNotIn(self.env[key], str(error.exception))
+
+    def test_missing_or_empty_certificate_is_rejected(self):
+        for empty in (False, True):
+            def no_certificate(args, **kwargs):
+                if empty:
+                    Path(args[args.index("-file") + 1]).touch()
+                return subprocess.CompletedProcess(args, 0, stdout=b"warning", stderr=b"")
+            with self.subTest(empty=empty), patch.object(release.subprocess, "run", side_effect=no_certificate):
+                with self.assertRaisesRegex(ValueError, "Cannot read signing certificate"):
+                    release.keystore_fingerprint()
+
+    def test_final_verification_rechecks_keystore_before_inspecting_apk(self):
+        with patch.object(release, "keystore_fingerprint", return_value="cd" * 32), \
+                patch.object(release, "verify_apk") as apk:
+            with self.assertRaisesRegex(ValueError, "Keystore certificate does not match"):
+                release.verify()
+        apk.assert_not_called()
 
 
 class PublicationSafetyTests(unittest.TestCase):
