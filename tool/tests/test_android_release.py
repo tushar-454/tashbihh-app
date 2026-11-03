@@ -136,7 +136,8 @@ class ReleaseSafetyTests(unittest.TestCase):
         for path in ("lib/main.dart", "assets/font.ttf", "android/app/build.gradle.kts",
                      "pubspec.yaml", "pubspec.lock", "build.yaml", "l10n.yaml",
                      "packages/local/pubspec.yaml", ".github/workflows/android-release.yml",
-                     "tool/android_release.py", "tool/tests/test_android_release.py"):
+                     "tool/android_release.py", "tool/tests/test_android_release.py",
+                     "tool/tests/fixtures/apksigner-37-v2.txt"):
             with self.subTest(path=path):
                 self.assertTrue(release.relevant(path))
         for path in ("website/style.css", "docs/android-releases.md", "README.md", "ios/Podfile",
@@ -215,6 +216,8 @@ class ReleaseSafetyTests(unittest.TestCase):
 
 class CertificateVerificationTests(unittest.TestCase):
     fingerprint = "ab" * 32
+    ci_fingerprint = "a763b58cdc369100d53f2e09b88019f7cfee7e808d3ded6b1c80653c98ae3e95"
+    ci_report = (Path(__file__).parent / "fixtures/apksigner-37-v2.txt").read_text()
 
     def verify(self, output, expected=None):
         with patch.object(release, "sdk_tool", return_value="apksigner"), \
@@ -236,6 +239,43 @@ class CertificateVerificationTests(unittest.TestCase):
                 self.verify("Number of signers: 1\n"
                             f"Signer (minSdkVersion=33{development}, maxSdkVersion=2147483647) certificate SHA-256 digest: {self.fingerprint}\n"
                             f"Signer (minSdkVersion=28, maxSdkVersion=32) certificate SHA-256 digest: {self.fingerprint}\n")
+
+    def test_build_tools_37_actual_ci_report(self):
+        # Public certificate output from Actions run 41631367999, not a key.
+        for newline in ("\n", "\r\n"):
+            with self.subTest(newline=newline):
+                self.verify(self.ci_report.replace("\n", newline), self.ci_fingerprint)
+
+    def test_build_tools_37_rejects_wrong_pin(self):
+        with self.assertRaisesRegex(ValueError, "does not match"):
+            self.verify(self.ci_report, self.fingerprint)
+
+    def test_build_tools_37_rejects_duplicate_or_multiple_signers(self):
+        for count in (1, 2):
+            for digest in (self.ci_fingerprint, self.fingerprint):
+                report = self.ci_report.replace("Number of signers: 1", f"Number of signers: {count}")
+                report += f"V2 Signer: certificate SHA-256 digest: {digest}\n"
+                with self.subTest(count=count, digest=digest), self.assertRaises(ValueError):
+                    self.verify(report, self.ci_fingerprint)
+
+    def test_build_tools_37_rejects_malformed_digest_and_unrecognized_signer(self):
+        for report in (self.ci_report.replace(self.ci_fingerprint, self.ci_fingerprint + "junk"),
+                       self.ci_report.replace("V2 Signer:", "V99 Signer:"),
+                       self.ci_report + f"Signer unknown certificate SHA-256 digest: {self.ci_fingerprint}\n"):
+            with self.subTest(report=report), self.assertRaises(ValueError):
+                self.verify(report, self.ci_fingerprint)
+
+    def test_build_tools_37_does_not_accept_public_key_or_source_stamp_as_certificate(self):
+        report = self.ci_report.replace(
+            f"V2 Signer: certificate SHA-256 digest: {self.ci_fingerprint}\n", "")
+        report += f"Source Stamp Signer certificate SHA-256 digest: {self.ci_fingerprint}\n"
+        with self.assertRaises(ValueError):
+            self.verify(report, self.ci_fingerprint)
+
+    def test_build_tools_37_debug_key_mismatch_is_actionable(self):
+        report = self.ci_report.replace("CN=Tushar, L=Dhaka, ST=Dhaka, C=BD", "CN=Android Debug")
+        with self.assertRaisesRegex(ValueError, "Android Debug"):
+            self.verify(report, self.fingerprint)
 
     def test_v31_different_certificate_in_any_range_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "does not match"):

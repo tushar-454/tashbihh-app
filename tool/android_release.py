@@ -44,6 +44,7 @@ def relevant(path):
         path in APP_FILES or path.startswith(APP_PREFIXES)
         or path == "tool/android_release.py"
         or path.startswith("tool/tests/test_android_release")
+        or path.startswith("tool/tests/fixtures/apksigner-")
     )
 
 
@@ -200,28 +201,29 @@ def verify_apk_certificate(apk, expected_fingerprint):
     verified = run(tool, "verify", "--verbose", "--print-certs", str(apk)).replace("\r\n", "\n")
     # This report contains public certificates/digests only, never keystore data.
     print(f"apksigner report ({tool}) for {Path(apk).name}:\n{verified}")
-    # v3.1 prints SDK-range signers rather than "Signer #1". Every range must
-    # use the pinned certificate; never deduplicate numbered signers to hide extras.
+    # Labels vary by SDK: numbered, v3.1 SDK ranges, or Build Tools 37's
+    # "V2 Signer:". Every certificate must match; never deduplicate signers.
     counts = re.findall(r"^Number of signers:[ \t]*(\d+)[ \t]*$", verified, re.MULTILINE)
     if counts != ["1"]:
         raise ValueError("APK must have exactly one signer; apksigner reported "
                          + (", ".join(counts) if counts else "no signer count") + ".")
     certificates = re.findall(
-        r"^(Signer[^\r\n]*?) certificate SHA-256 digest:[ \t]*([^\r\n]*)$",
+        r"^((?:Signer|V\d+(?:\.\d+)? Signer)[^\r\n]*?) certificate SHA-256 digest:[ \t]*([^\r\n]*)$",
         verified, re.MULTILINE,
     )
     numbered = [label for label, _ in certificates if re.fullmatch(r"Signer #\d+", label)]
     ranged = [label for label, _ in certificates if re.fullmatch(
         r"Signer \(minSdkVersion=\d+(?: \(dev release=true\))?, maxSdkVersion=\d+\)", label)]
-    if not certificates or not (numbered == ["Signer #1"] and len(certificates) == 1
-                                or len(ranged) == len(certificates)):
+    single = len(certificates) == 1 and (numbered == ["Signer #1"]
+                                       or certificates[0][0] == "V2 Signer:")
+    if not certificates or not (single or len(ranged) == len(certificates)):
         raise ValueError("Cannot identify exactly one APK signer from apksigner certificate output; "
                          "multiple or unrecognized signer records. Refusing publication.")
     fingerprints = [certificate_fingerprint(value) for _, value in certificates]
     print(f"APK {Path(apk).name} certificate SHA-256: {', '.join(fingerprints)}")
     print(f"Pinned production certificate SHA-256: {expected}")
     if any(value != expected for value in fingerprints):
-        debug = bool(re.search(r"^Signer[^\r\n]* certificate DN:.*CN=Android Debug(?:,|$)",
+        debug = bool(re.search(r"^(?:Signer|V\d+(?:\.\d+)? Signer)[^\r\n]* certificate DN:.*CN=Android Debug(?:,|$)",
                                verified, re.MULTILINE))
         raise ValueError("APK signer does not match the pinned production certificate. "
                          + ("APK certificate identifies itself as Android Debug. " if debug else "")

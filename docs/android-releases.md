@@ -184,7 +184,7 @@ requires exactly 64 hex digits. It requires one APK signer and a matching
 certificate in every reported SDK range. Public key digests and source-stamp
 certificates are separate identities and are not accepted as APK signer digests.
 
-Both numbered and v3.1 SDK-range labels are supported. Android's
+Numbered, v3.1 SDK-range and Build Tools 37 `V2 Signer:` labels are supported. Android's
 [apksigner implementation](https://android.googlesource.com/platform/tools/apksig/+/refs/heads/main/src/apksigner/java/com/android/apksigner/ApkSignerTool.java)
 prints SDK ranges instead of `Signer #1` for v3.1 signatures. The former
 numbered-only regex could report a signer mismatch with no parsed certificates.
@@ -302,9 +302,39 @@ with a prior local validation certificate. Neither is the failed CI artifact.
 No production keystore is available locally, and no new key was generated for
 this investigation.
 
+### Root cause confirmed in run 41631367999
+
+The [follow-up CI run](https://github.com/tushar-454/tashbihh-app/actions/runs/41631367999)
+used Build Tools **37.0.0**, which reported `V2 Signer: certificate SHA-256 digest:`
+instead of `Signer #1 certificate SHA-256 digest:`. The verifier did not recognize
+that label, even though `apksigner` verified the APK, reported one signer, and
+printed the same certificate SHA-256 as the keystore alias:
+
+```text
+a763b58cdc369100d53f2e09b88019f7cfee7e808d3ded6b1c80653c98ae3e95
+```
+
+The certificate's subject is `CN=Tushar, L=Dhaka, ST=Dhaka, C=BD`. The CI APK is
+signed with the configured production certificate, and is not the stale local
+debug APK. The signing secrets do not need changing to fix this failure.
+
+The parser now accepts a single `V2 Signer:` record while retaining the signer
+count and certificate pin checks. It rejects duplicate V2 records even if their
+digests match, checks complete digest values, and ignores public-key/source-stamp
+digests as signing identities. The public CI report is saved as a regression
+fixture in `tool/tests/fixtures/apksigner-37-v2.txt`.
+
+The retained APK from this run was downloaded and independently verified with
+local Build Tools 36 `apksigner verify --verbose --print-certs`. It has one signer
+with the production certificate above. The fixed verifier also passed its
+package ID, version `1.0.2`/code `2`, non-debuggable mode and all three ABIs. The
+exact CI Build Tools 37 report was replayed through the fixed parser alongside
+real metadata/ZIP checks on that same APK, and passed.
+
 ## Validation of the signing verification changes
 
-- All 40 release automation tests pass, including normalized fingerprints,
+- All 46 release automation tests pass, including the actual Build Tools 37 CI
+  report, normalized fingerprints,
   numbered/SDK-range signer formats, multiple-signer rejection, mismatched keys,
   malformed digests, keytool failures and secret-safe diagnostics.
 - `actionlint` and `git diff --check` pass.
@@ -318,8 +348,10 @@ this investigation.
   without building an APK. Missing or partial release credentials are rejected;
   the debug task graph succeeds without signing credentials.
 
-These checks do not verify the CI-signed production APK. No key was generated,
-secret changed, APK re-signed or GitHub release published in this investigation.
+The actual CI-signed production APK from run 41631367999 is now verified as
+described above. The patched workflow still needs a new hosted run to confirm
+the complete release/publication flow. No key was generated, secret changed,
+APK re-signed or GitHub release published in this investigation.
 
 ## Initial release setup validation (historical)
 
