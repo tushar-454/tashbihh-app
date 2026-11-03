@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tashbihh/core/backup/backup_service.dart';
 import 'package:tashbihh/core/backup/cloud_backup_coordinator.dart';
-import 'package:tashbihh/core/backup/cloud_ports.dart';
 import 'package:tashbihh/core/storage/progress_repository.dart';
 import 'package:tashbihh/features/counter/counter_controller.dart';
 
@@ -23,17 +22,11 @@ class DelayedCloudStore extends MemoryStore {
 void main() {
   late Harness h;
   late FakeAuth auth;
-  late FakeScheduler scheduler;
   late CloudBackupCoordinator cloud;
   setUp(() {
     h = Harness();
     auth = FakeAuth();
-    scheduler = FakeScheduler();
-    cloud = CloudBackupCoordinator(
-      controller: h.controller,
-      auth: auth,
-      scheduler: scheduler,
-    );
+    cloud = CloudBackupCoordinator(controller: h.controller, auth: auth);
   });
   tearDown(() {
     cloud.dispose();
@@ -105,76 +98,627 @@ void main() {
     },
   );
 
-  test(
-    '12 hour eligibility, unchanged suppression, and foreground retry cadence',
-    () async {
-      await cloud.connect();
-      h.controller.increment();
-      h.now = h.now.add(const Duration(hours: 11, minutes: 59));
-      await cloud.checkDue();
-      expect(auth.drives['a']!.uploads, 1);
-      h.now = h.now.add(const Duration(minutes: 1));
-      await cloud.checkDue();
-      expect(auth.drives['a']!.uploads, 2);
-      h.now = h.now.add(const Duration(hours: 12));
-      // Keep same day/custom mode for a stable fingerprint below.
-      await cloud.checkDue();
-      final uploaded = auth.drives['a']!.uploads;
-      await cloud.checkDue();
-      expect(auth.drives['a']!.uploads, uploaded);
-    },
-  );
-
-  test('unchanged data avoids automatic upload after 12 hours', () async {
-    h.controller.toggleMode();
+  test('elapsed time and ordinary resume never schedule an upload', () async {
     await cloud.connect();
-    h.now = h.now.add(const Duration(hours: 12));
-    await cloud.checkDue();
-    expect(auth.drives['a']!.uploads, 1);
-    expect(
-      cloud.lastSuccessfulBackup,
-      h.now.subtract(const Duration(hours: 12)).toUtc(),
-    );
+    h.controller.toggleMode();
+    h.controller.increment();
+    for (final hours in [12, 24, 48]) {
+      h.now = h.now.add(Duration(hours: hours));
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
+      h.controller.refresh();
+      expect(auth.drives['a']!.uploads, 1);
+    }
+  });
+
+  test('each close uploads once even if data is unchanged', () async {
+    await cloud.connect();
+    for (var i = 0; i < 3; i++) {
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
+      cloud.suspend();
+      cloud.suspend();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, i + 2);
+      expect(
+        h.repository.cloudMetadata.containsKey('closeBackupPending'),
+        false,
+      );
+    }
+  });
+
+  test('closing during an older upload queues the latest snapshot', () async {
+    await cloud.connect();
+    cloud.resume();
+    auth.drives['a']!.gate = Completer<void>();
+    final uploading = cloud.backupNow();
+    await Future<void>.delayed(Duration.zero);
+    h.controller.increment();
+    cloud.suspend();
+    cloud.suspend();
+    auth.drives['a']!.gate!.complete();
+    await uploading;
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 3);
+    final saved = cloud.format
+        .validate(auth.drives['a']!.bytes!)
+        .state(h.config);
+    expect(saved.prayers['fajr']!.counts['subhanallah'], 1);
+    expect(h.repository.cloudMetadata.containsKey('closeBackupPending'), false);
   });
 
   test(
-    'scheduler starts on resume, stops on suspend; overdue startup uploads',
+    'another close during metadata commit retains the newer snapshot',
     () async {
-      await cloud.connect();
-      h.controller.increment();
-      h.now = h.now.add(const Duration(hours: 13));
-      cloud.resume();
+      final store = DelayedCloudStore();
+      final repository = ProgressRepository(store);
+      final controller = CounterController(
+        config: h.config,
+        repository: repository,
+        state: h.controller.state,
+        settings: h.controller.settings,
+        clock: () => h.now,
+      );
+      final coordinator = CloudBackupCoordinator(
+        controller: controller,
+        auth: auth,
+      );
+      addTearDown(() {
+        coordinator.dispose();
+        controller.dispose();
+      });
+      await coordinator.connect();
+      coordinator.resume();
+      store.gate = Completer<void>();
+      coordinator.suspend();
       await Future<void>.delayed(Duration.zero);
-      expect(scheduler.starts, 1);
       expect(auth.drives['a']!.uploads, 2);
-      cloud.suspend();
-      expect(scheduler.check, isNull);
-      h.controller.increment();
-      h.now = h.now.add(const Duration(hours: 13));
-      cloud.resume();
+      coordinator.resume();
+      controller.increment();
+      coordinator.suspend();
+      expect(repository.cloudMetadata['closeBackupPending'], 2);
+      store.gate!.complete();
       await Future<void>.delayed(Duration.zero);
+      await controller.flush();
       expect(auth.drives['a']!.uploads, 3);
+      final saved = cloud.format
+          .validate(auth.drives['a']!.bytes!)
+          .state(h.config);
+      expect(saved.prayers['fajr']!.counts['subhanallah'], 1);
+      expect(repository.cloudMetadata.containsKey('closeBackupPending'), false);
+      expect(jsonDecode(store.value!)['cloud']['closeBackupPending'], isNull);
+    },
+  );
+
+  test('interrupted close upload is recovered on the next launch', () async {
+    await cloud.connect();
+    cloud.resume();
+    h.controller.increment();
+    auth.drives['a']!.offline = true;
+    cloud.suspend();
+    await Future<void>.delayed(Duration.zero);
+    await h.controller.flush();
+    final repository = ProgressRepository(h.store);
+    final (state, settings) = await repository.load(h.config, h.now);
+    final controller = CounterController(
+      config: h.config,
+      repository: repository,
+      state: state,
+      settings: settings,
+      clock: () => h.now,
+    );
+    final restarted = CloudBackupCoordinator(
+      controller: controller,
+      auth: auth,
+    );
+    addTearDown(() {
+      restarted.dispose();
+      controller.dispose();
+    });
+    auth.drives['a']!.offline = false;
+    restarted.resume();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 2);
+    expect(auth.drives['a']!.downloads, 1);
+    expect(repository.cloudMetadata.containsKey('closeBackupPending'), false);
+    final saved = cloud.format
+        .validate(auth.drives['a']!.bytes!)
+        .state(h.config);
+    expect(saved.prayers['fajr']!.counts['subhanallah'], 1);
+  });
+
+  Future<void> prepareStreakCompletion({
+    bool missingEarlierPrayer = false,
+  }) async {
+    for (final prayer in h.config.prayers) {
+      h.now = DateTime(2026, 11, 2, prayer.start ~/ 60, prayer.start % 60);
+      h.controller.refresh();
+      final required = missingEarlierPrayer && prayer.id == 'fajr' ? 2 : 3;
+      for (final (index, dua)
+          in h.config.forPrayer(prayer.id).take(required).indexed) {
+        h.controller.selectDua(dua.id);
+        final remaining = prayer.id == 'isha' && index == 2 ? 1 : 0;
+        for (var i = 0; i < dua.target - remaining; i++) {
+          h.controller.increment();
+        }
+      }
+    }
+    expect(h.controller.state.streak, 0);
+    expect(h.controller.count, h.controller.target - 1);
+    await cloud.connect();
+    cloud.resume();
+    await Future<void>.delayed(Duration.zero);
+  }
+
+  test(
+    'third Isha dua earns one streak day and immediately backs up once',
+    () async {
+      await prepareStreakCompletion();
+      expect(auth.drives['a']!.uploads, 1);
+      expect(h.controller.increment(), true);
+      await Future<void>.delayed(Duration.zero);
+      expect(h.controller.state.streak, 1);
+      expect(auth.drives['a']!.uploads, 2);
+      final saved = cloud.format
+          .validate(auth.drives['a']!.bytes!)
+          .state(h.config);
+      expect(saved.streak, 1);
+      expect(saved.lastStreakDate, '2026-11-02');
+      expect(saved.prayers.values.every((p) => p.completed.length >= 3), true);
+      expect(
+        h.repository.cloudMetadata.containsKey('streakEarnedPending'),
+        false,
+      );
+      expect(
+        jsonDecode(h.store.value!)['cloud']['streakEarnedPending'],
+        isNull,
+      );
+
+      h.controller.refresh();
+      h.controller.selectDua(h.config.forPrayer('isha')[3].id);
+      h.controller.increment();
+      await Future<void>.delayed(Duration.zero);
+      expect(h.controller.state.streak, 1);
+      expect(auth.drives['a']!.uploads, 2);
+
+      h.now = DateTime(2026, 11, 3, 5);
+      h.controller.refresh();
+      h.completeDay();
+      await Future<void>.delayed(Duration.zero);
+      expect(h.controller.state.streak, 2);
+      expect(auth.drives['a']!.uploads, 3);
+      expect(
+        cloud.format.validate(auth.drives['a']!.bytes!).state(h.config).streak,
+        2,
+      );
+    },
+  );
+
+  test('three Isha duas without three in every earlier prayer do not trigger a backup', () async {
+    await prepareStreakCompletion(missingEarlierPrayer: true);
+    h.controller.increment();
+    await Future<void>.delayed(Duration.zero);
+    expect(h.controller.state.prayers['isha']!.completed.length, 3);
+    expect(h.controller.state.streak, 0);
+    expect(auth.drives['a']!.uploads, 1);
+    expect(
+      h.repository.cloudMetadata.containsKey('streakEarnedPending'),
+      false,
+    );
+  });
+
+  for (final delayed in ['network', 'metadata']) {
+    test(
+      'streak earned during an older $delayed operation uploads a fresh snapshot',
+      () async {
+        await prepareStreakCompletion();
+        await h.controller.flush();
+        final store = DelayedCloudStore()..value = h.store.value;
+        final repository = ProgressRepository(store);
+        final (state, settings) = await repository.load(h.config, h.now);
+        final controller = CounterController(
+          config: h.config,
+          repository: repository,
+          state: state,
+          settings: settings,
+          clock: () => h.now,
+        );
+        final coordinator = CloudBackupCoordinator(
+          controller: controller,
+          auth: auth,
+        );
+        addTearDown(() {
+          coordinator.dispose();
+          controller.dispose();
+        });
+        coordinator.resume();
+        final gate = Completer<void>();
+        if (delayed == 'network') {
+          auth.drives['a']!.gate = gate;
+        } else {
+          store.gate = gate;
+        }
+        final uploading = coordinator.backupNow();
+        await Future<void>.delayed(Duration.zero);
+        controller.increment();
+        expect(repository.cloudMetadata['streakEarnedPending'], '2026-11-02');
+        gate.complete();
+        await uploading;
+        await Future<void>.delayed(Duration.zero);
+        await controller.flush();
+        expect(auth.drives['a']!.uploads, 3);
+        final saved = cloud.format
+            .validate(auth.drives['a']!.bytes!)
+            .state(h.config);
+        expect(saved.streak, 1);
+        expect(saved.prayers['isha']!.completed.length, 3);
+        expect(
+          repository.cloudMetadata.containsKey('streakEarnedPending'),
+          false,
+        );
+        expect(
+          jsonDecode(store.value!)['cloud']['streakEarnedPending'],
+          isNull,
+        );
+      },
+    );
+  }
+
+  test(
+    'offline earned streak remains pending and backs up once after restart',
+    () async {
+      await prepareStreakCompletion();
+      auth.drives['a']!.offline = true;
+      h.controller.increment();
+      await Future<void>.delayed(Duration.zero);
+      await h.controller.flush();
+      expect(h.controller.state.streak, 1);
+      expect(
+        jsonDecode(h.store.value!)['cloud']['streakEarnedPending'],
+        '2026-11-02',
+      );
+      final attempts = auth.resumes;
+      h.controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.resumes, attempts);
+
+      final repository = ProgressRepository(h.store);
+      final (state, settings) = await repository.load(h.config, h.now);
+      final controller = CounterController(
+        config: h.config,
+        repository: repository,
+        state: state,
+        settings: settings,
+        clock: () => h.now,
+      );
+      final restarted = CloudBackupCoordinator(
+        controller: controller,
+        auth: auth,
+      );
+      addTearDown(() {
+        restarted.dispose();
+        controller.dispose();
+      });
+      auth.drives['a']!.offline = false;
+      restarted.resume();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 2);
+      expect(
+        cloud.format.validate(auth.drives['a']!.bytes!).state(h.config).streak,
+        1,
+      );
+      expect(
+        repository.cloudMetadata.containsKey('streakEarnedPending'),
+        false,
+      );
+      controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 2);
+    },
+  );
+
+  Future<void> prepareMissedDay() async {
+    h.completeDay();
+    h.now = DateTime(2026, 11, 3, 5);
+    h.controller.refresh();
+    // Every prayer except Isha meets the minimum; Isha has only two duas.
+    for (final prayer in h.config.prayers) {
+      h.now = DateTime(2026, 11, 3, prayer.start ~/ 60, prayer.start % 60);
+      h.controller.refresh();
+      final required = prayer.id == 'isha' ? 2 : 3;
+      for (final dua in h.config.forPrayer(prayer.id).take(required)) {
+        h.controller.selectDua(dua.id);
+        for (var i = 0; i < dua.target; i++) {
+          h.controller.increment();
+        }
+      }
+    }
+    h.controller.toggleMode();
+    h.controller.increment();
+    h.controller.setIntensity(75);
+    h.now = DateTime(2026, 11, 3, 23, 59);
+    h.controller.refresh();
+    expect(h.controller.state.streak, 1);
+    await cloud.connect();
+  }
+
+  void expectResetBackup() {
+    final saved = cloud.format.validate(auth.drives['a']!.bytes!);
+    final state = saved.state(h.config);
+    expect(state.date, '2026-11-04');
+    expect(state.streak, 0);
+    expect(state.lastStreakDate, '2026-11-02');
+    for (final prayer in state.prayers.values) {
+      expect(prayer.completed, isEmpty);
+      expect(prayer.counts.values.every((count) => count == 0), true);
+    }
+    expect(state.customCount, 1);
+    expect(saved.settings.vibrationIntensity, 75);
+  }
+
+  test('missed prayer resets streak and immediately uploads all cleared daily data', () async {
+    await prepareMissedDay();
+    cloud.resume();
+    await Future<void>.delayed(Duration.zero);
+    h.now = DateTime(2026, 11, 4);
+    h.controller.refresh();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 2);
+    expectResetBackup();
+    expect(h.repository.cloudMetadata.containsKey('dailyResetPending'), false);
+    expect(jsonDecode(h.store.value!)['cloud']['dailyResetPending'], isNull);
+    await cloud.retryPending();
+    expect(auth.drives['a']!.uploads, 2);
+  });
+
+  test('successful day preserves streak without an automatic upload', () async {
+    h.completeDay();
+    h.now = DateTime(2026, 11, 2, 23, 59);
+    await cloud.connect();
+    cloud.resume();
+    await Future<void>.delayed(Duration.zero);
+    h.now = DateTime(2026, 11, 3);
+    h.controller.refresh();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 1);
+    expect(h.controller.state.streak, 1);
+    expect(
+      h.controller.state.prayers.values.every((p) => p.completed.isEmpty),
+      true,
+    );
+    expect(h.repository.cloudMetadata.containsKey('dailyResetPending'), false);
+  });
+
+  test('offline streak loss survives restart and retries on launch', () async {
+    await prepareMissedDay();
+    auth.drives['a']!.offline = true;
+    h.now = DateTime(2026, 11, 4);
+    cloud.resume();
+    await Future<void>.delayed(Duration.zero);
+    await h.controller.flush();
+    expect(h.controller.state.streak, 0);
+    expect(
+      jsonDecode(h.store.value!)['cloud']['dailyResetPending'],
+      '2026-11-04',
+    );
+    final attempts = auth.resumes;
+    h.controller.refresh();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.resumes, attempts);
+
+    final repository = ProgressRepository(h.store);
+    final (state, settings) = await repository.load(h.config, h.now);
+    final controller = CounterController(
+      config: h.config,
+      repository: repository,
+      state: state,
+      settings: settings,
+      clock: () => h.now,
+    );
+    final restarted = CloudBackupCoordinator(
+      controller: controller,
+      auth: auth,
+    );
+    addTearDown(() {
+      restarted.dispose();
+      controller.dispose();
+    });
+    auth.drives['a']!.offline = false;
+    restarted.resume();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 2);
+    expectResetBackup();
+    expect(repository.cloudMetadata.containsKey('dailyResetPending'), false);
+  });
+
+  test(
+    'startup rollover before coordinator attaches is immediately backed up',
+    () async {
+      await prepareMissedDay();
+      await h.controller.flush();
+      h.now = DateTime(2026, 11, 4);
+      final repository = ProgressRepository(h.store);
+      final (state, settings) = await repository.load(h.config, h.now);
+      final controller = CounterController(
+        config: h.config,
+        repository: repository,
+        state: state,
+        settings: settings,
+        clock: () => h.now,
+      );
+      expect(controller.state.streak, 0);
+      final restarted = CloudBackupCoordinator(
+        controller: controller,
+        auth: auth,
+      );
+      addTearDown(() {
+        restarted.dispose();
+        controller.dispose();
+      });
+      restarted.resume();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 2);
+      expectResetBackup();
     },
   );
 
   test(
-    'offline auto backup preserves data and retries after five minutes',
+    'failed streak loss retries on resume without repeated listener uploads',
+    () async {
+      await prepareMissedDay();
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
+      auth.drives['a']!.offline = true;
+      h.now = DateTime(2026, 11, 4);
+      h.controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+      final attempts = auth.resumes;
+      auth.drives['a']!.offline = false;
+      h.now = h.now.add(const Duration(minutes: 4));
+      h.controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.resumes, attempts);
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 2);
+      expectResetBackup();
+    },
+  );
+
+  test(
+    'rollover during an older upload triggers a second immediate upload',
+    () async {
+      await prepareMissedDay();
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
+      auth.drives['a']!.gate = Completer<void>();
+      final uploading = cloud.backupNow();
+      await Future<void>.delayed(Duration.zero);
+      h.now = DateTime(2026, 11, 4);
+      h.controller.refresh();
+      expect(h.repository.cloudMetadata['dailyResetPending'], '2026-11-04');
+      auth.drives['a']!.gate!.complete();
+      await uploading;
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 3);
+      expectResetBackup();
+      expect(
+        h.repository.cloudMetadata.containsKey('dailyResetPending'),
+        false,
+      );
+    },
+  );
+
+  test(
+    'rollover during metadata storage retains pending reset and uploads again',
+    () async {
+      await prepareMissedDay();
+      await h.controller.flush();
+      final store = DelayedCloudStore()..value = h.store.value;
+      final repository = ProgressRepository(store);
+      final (state, settings) = await repository.load(h.config, h.now);
+      final controller = CounterController(
+        config: h.config,
+        repository: repository,
+        state: state,
+        settings: settings,
+        clock: () => h.now,
+      );
+      final coordinator = CloudBackupCoordinator(
+        controller: controller,
+        auth: auth,
+      );
+      addTearDown(() {
+        coordinator.dispose();
+        controller.dispose();
+      });
+      coordinator.resume();
+      await Future<void>.delayed(Duration.zero);
+      store.gate = Completer<void>();
+      final uploading = coordinator.backupNow();
+      await Future<void>.delayed(Duration.zero);
+      // Drive has accepted yesterday's payload; its metadata write is blocked.
+      expect(auth.drives['a']!.uploads, 2);
+      h.now = DateTime(2026, 11, 4);
+      controller.refresh();
+      store.gate!.complete();
+      await uploading;
+      await Future<void>.delayed(Duration.zero);
+      await controller.flush();
+      expect(auth.drives['a']!.uploads, 3);
+      expectResetBackup();
+      expect(repository.cloudMetadata.containsKey('dailyResetPending'), false);
+      expect(jsonDecode(store.value!)['state']['date'], '2026-11-04');
+      expect(jsonDecode(store.value!)['cloud']['dailyResetPending'], isNull);
+    },
+  );
+
+  test('historical restore immediately uploads normalized zero streak and cleared prayers', () async {
+    h.completeDay();
+    auth.drives['a']!.bytes = backup();
+    h.now = DateTime(2026, 11, 4);
+    cloud.resume();
+    await cloud.connect();
+    await Future<void>.delayed(Duration.zero);
+    expect(auth.drives['a']!.uploads, 1);
+    final saved = cloud.format
+        .validate(auth.drives['a']!.bytes!)
+        .state(h.config);
+    expect(saved.date, '2026-11-04');
+    expect(saved.streak, 0);
+    expect(saved.prayers.values.every((p) => p.completed.isEmpty), true);
+    expect(saved.restoredDay!['streak'], 1);
+    expect(h.repository.cloudMetadata.containsKey('dailyResetPending'), false);
+  });
+
+  test(
+    'close uploads the latest counters and settings to the current account',
     () async {
       await cloud.connect();
+      cloud.resume();
+      h.controller.toggleMode();
+      h.controller.increment();
+      h.controller.setIntensity(75);
+      cloud.suspend();
+      await Future<void>.delayed(Duration.zero);
+      expect(auth.drives['a']!.uploads, 2);
+      expect(auth.drives['b']!.uploads, 0);
+      final saved = cloud.format.validate(auth.drives['a']!.bytes!);
+      expect(saved.state(h.config).customCount, 1);
+      expect(saved.settings.vibrationIntensity, 75);
+    },
+  );
+
+  test(
+    'failed close backup remains pending and resumes with latest data',
+    () async {
+      await cloud.connect();
+      cloud.resume();
       h.controller.increment();
       final success = cloud.lastSuccessfulBackup;
       auth.drives['a']!.offline = true;
-      h.now = h.now.add(const Duration(hours: 12));
-      await cloud.checkDue();
+      cloud.suspend();
+      await Future<void>.delayed(Duration.zero);
+      await h.controller.flush();
       expect(cloud.lastSuccessfulBackup, success);
-      expect(h.controller.count, 1);
+      expect(jsonDecode(h.store.value!)['cloud']['closeBackupPending'], 1);
       final attempts = auth.resumes;
-      await cloud.checkDue();
+      h.controller.refresh();
+      await Future<void>.delayed(Duration.zero);
       expect(auth.resumes, attempts);
       auth.drives['a']!.offline = false;
-      h.now = h.now.add(const Duration(minutes: 5));
-      await cloud.checkDue();
+      h.controller.increment();
+      cloud.resume();
+      await Future<void>.delayed(Duration.zero);
       expect(auth.drives['a']!.uploads, 2);
+      final saved = cloud.format
+          .validate(auth.drives['a']!.bytes!)
+          .state(h.config);
+      expect(saved.prayers['fajr']!.counts['subhanallah'], 2);
+      expect(
+        h.repository.cloudMetadata.containsKey('closeBackupPending'),
+        false,
+      );
     },
   );
 
@@ -262,7 +806,7 @@ void main() {
     expect(cloud.lastSuccessfulBackup, isNull);
     expect(h.repository.cloudMetadata, isEmpty);
     h.now = h.now.add(const Duration(days: 2));
-    await cloud.checkDue();
+    await cloud.retryPending();
     expect(auth.drives['a']!.uploads, 1);
     await expectLater(cloud.backupNow(), throwsA(isA<BackupException>()));
     expect(auth.drives['a']!.bytes, isNull);
@@ -286,7 +830,7 @@ void main() {
         expect(h.controller.state.toJson(), before);
         expect(cloud.resetPending, true);
         h.now = h.now.add(const Duration(hours: 13));
-        await cloud.checkDue();
+        await cloud.retryPending();
         expect(auth.drives['a']!.uploads, 1);
         auth.drives['a']!.deleteFailure = false;
         auth.drives['a']!.offline = false;
@@ -342,7 +886,7 @@ void main() {
   });
 
   test(
-    'concurrent taps, switch, reset and scheduled operations cannot overlap',
+    'concurrent taps, switch, reset and automatic operations cannot overlap',
     () async {
       await cloud.connect();
       auth.drives['a']!.gate = Completer<void>();
@@ -352,7 +896,7 @@ void main() {
         cloud.resetEverything(),
         throwsA(isA<BackupException>()),
       );
-      await cloud.checkDue();
+      await cloud.retryPending();
       expect(
         h.controller.increment(),
         true,
@@ -361,9 +905,8 @@ void main() {
       await pending;
       expect(auth.drives['a']!.uploads, 2);
       expect(h.controller.count, 1);
-      // Captured fingerprint must not include the count made during the upload.
-      h.now = h.now.add(const Duration(hours: 12));
-      await cloud.checkDue();
+      // A later explicit tap captures the count made during the upload.
+      await cloud.backupNow();
       expect(auth.drives['a']!.uploads, 3);
     },
   );
@@ -381,7 +924,6 @@ void main() {
     final coordinator = CloudBackupCoordinator(
       controller: controller,
       auth: auth,
-      scheduler: FakeScheduler(),
     );
     addTearDown(() {
       coordinator.dispose();
@@ -401,8 +943,7 @@ void main() {
     expect(saved['cloud']['accountId'], 'a');
     expect(saved['cloud']['lastBackup'], isNotNull);
     expect(saved['state']['prayers']['fajr']['counts']['subhanallah'], 1);
-    h.now = h.now.add(const Duration(hours: 12));
-    await coordinator.checkDue();
+    await coordinator.backupNow();
     expect(auth.drives['a']!.uploads, 3);
   });
 
@@ -442,17 +983,13 @@ void main() {
       settings: settings,
       clock: () => h.now,
     );
-    final restarted = CloudBackupCoordinator(
-      controller: restored,
-      auth: auth,
-      scheduler: FakeScheduler(),
-    );
+    final restarted = CloudBackupCoordinator(controller: restored, auth: auth);
     addTearDown(() {
       restarted.dispose();
       restored.dispose();
     });
     restarted.resume();
-    await restarted.checkDue();
+    await restarted.retryPending();
     expect(restored.count, 1);
     expect(restarted.resetPending, true);
     expect(auth.drives['a']!.bytes, isNull);
@@ -480,21 +1017,16 @@ void main() {
     },
   );
 
-  testWidgets(
-    'real foreground scheduler checks every five minutes and cancels',
-    (tester) async {
-      final real = ForegroundBackupScheduler();
-      var checks = 0;
-      real.start(() async {
-        checks++;
-      });
-      await tester.pump(const Duration(minutes: 5));
-      expect(checks, 1);
-      await tester.pump(const Duration(minutes: 5));
-      expect(checks, 2);
-      real.stop();
-      await tester.pump(const Duration(minutes: 5));
-      expect(checks, 2);
-    },
-  );
+  testWidgets('no periodic backup timer runs while the app stays open', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      await cloud.connect();
+      cloud.resume();
+      h.controller.increment();
+    });
+    await tester.pump(const Duration(hours: 48));
+    expect(auth.drives['a']!.uploads, 1);
+    expect(auth.resumes, 0);
+  });
 }

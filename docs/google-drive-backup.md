@@ -68,16 +68,16 @@ Corrupt, future-dated, incompatible, unavailable, or unauthorized backups abort
 connection without modifying local progress or the committed account.
 
 A connected tap captures current progress and uploads immediately, even when
-unchanged and before a scheduled upload is due. It then shows the current account,
-result, and **Switch Google account**. Switching runs the same restore-first
+unchanged. It then shows the current account, result, and **Switch Google
+account**. Switching runs the same restore-first
 transition for the newly selected account. No old data is uploaded to that
 account before checking its existing backup. The previous committed identity and
 progress survive cancellation or failure.
 
 Restore and reset freeze user-data mutations during the transition. Ordinary
-network uploads leave counting available; the saved fingerprint belongs to the
-captured payload so counts made during upload remain eligible next time. Metadata
-writes serialize against outstanding progress writes without freezing counter
+network uploads leave counting available. Each upload captures its snapshot and
+pending event revisions together; later changes are included on the next trigger.
+Metadata writes serialize against outstanding progress writes without freezing counter
 interactions; subsequent count writes retain the committed metadata.
 
 `CounterController.commitCloud` stages the new state/settings and writes the
@@ -92,30 +92,69 @@ Historical prayer progress follows existing daily rollover rules, rather than
 assigning yesterday's prayer counts to today. The dated history is retained in
 `restoredDay`; custom progress and settings are restored normally.
 
-## Approximately twice-daily foreground synchronization
+## Event-based backups
 
-This implementation deliberately uses the task's allowed foreground fallback,
-not a headless WorkManager worker. Google Sign-In session recovery needs an
-Android Activity, and renewed consent requires foreground interaction. There is
-no supported durable account-session object for a new Dart worker isolate, and
-no unsafe token persistence or custom refresh-token mechanism was added.
+There is no twice-daily schedule, 12-hour eligibility check, periodic retry timer,
+or upload caused solely by elapsed time. Once Google Drive is connected, uploads
+are triggered by:
 
-On startup/resume the app checks the committed account's eligibility without
-blocking counter startup. While foregrounded, a five-minute timer checks again.
-Changed data uploads when at least 12 hours have elapsed since the last successful
-check. If data is unchanged, the check timestamp advances without uploading;
-`lastBackup` continues to record the last actual successful upload. A restored
-account first becomes eligible 12 hours after connection. Failed attempts retain
-the successful timestamps and retry after five minutes or a later eligible
-startup/resume. Explicit taps bypass this retry delay and 12-hour eligibility.
-Backgrounding cancels the timer. In-flight operations finish under the coordinator
-lock; terminated operations recover from the durable snapshot on next launch.
+1. **Closing or backgrounding the app:** the first `hidden`, `paused`, or
+   `detached` lifecycle event after a foreground session requests one immediate
+   upload, even if data is unchanged. Repeated lifecycle events for that close
+   are deduplicated. A temporary `inactive` focus change does not request a
+   backup, and disposing the screen does not simulate a close.
+2. **Tapping Backup/Restore while connected:** one immediate upload to the
+   currently committed Google account. First connection and account switching
+   keep their existing restore-first behavior, creating a first backup only
+   when the selected account has none.
+3. **Losing an existing streak:** completing at least three duas in every
+   prayer earns a streak day. An unfinished day drops an existing streak to zero
+   at the next local midnight, or when the app next observes the new date. This
+   requests one immediate upload of the full reset snapshot. A successful day's
+   ordinary rollover does not request an extra backup. A historical restore that
+   drops an old streak to zero follows the same rule.
+4. **Earning a streak day:** when the final required dua completes and all five
+   prayers have at least three completed duas, the streak increases once for that
+   local date and requests one immediate full backup. This normally happens on
+   Isha's third completed dua when the earlier prayers already qualify. Additional
+   duas, refreshes, and same-day restores do not award another day or request
+   another earned-streak backup.
 
-**There are no uploads while the app is closed or suspended, and no guarantee of
-12-hour wall-clock execution.** Expired authorization produces actionable feedback
-and needs an explicit Backup/Restore tap. Automatic jobs never request consent.
-Network requests themselves determine connectivity; a separate connectivity
-plugin or connection-type guess is unnecessary.
+At startup/resume, daily rollover compares the saved progress date with today's
+local date. An existing streak survives only when the saved day was successful
+(`lastStreakDate` equals the saved progress date) and today is exactly the next
+local day. An incomplete saved day or skipped day resets it to zero, clears the
+daily prayer progress, and requests the reset backup once. Opening the app the
+morning after a successful day preserves the streak until that new day's
+requirements are evaluated.
+
+The reset snapshot includes the current date, cleared prayer counts/completions/
+selections, and zero streak. Custom progress, settings, and last successful streak
+date are retained. The backup always contains all current progress and settings.
+
+Close, streak-loss, and earned-streak requests are persisted as
+`closeBackupPending`, `dailyResetPending`, and `streakEarnedPending` inside the
+local progress snapshot. Only a successful upload of the matching captured
+revision acknowledges a request. A new close or streak
+change during an older upload or native metadata commit remains pending for an
+immediate follow-up upload of the latest state. If multiple events are covered by
+one snapshot, that single upload acknowledges them together.
+
+Failed uploads keep their event markers and successful timestamps. There is no
+automatic retry loop: pending work retries on the next startup/resume, a new
+close, or an explicit Backup/Restore tap. An ordinary startup/resume without
+pending work does not upload. Account changes and Reset Everything remain
+serialized; interrupted Reset Everything blocks all backup recreation.
+
+Close-time uploads use noninteractive authorization and start immediately as the
+app leaves the foreground. They do not delay Android's system exit and are best
+effort: Android can suspend or kill the process before a request finishes, and a
+force-stop may provide no lifecycle callback. Persisted requests recover on the
+next launch when the local write completed. See Flutter's
+[application lifecycle guarantees](https://api.flutter.dev/flutter/dart-ui/AppLifecycleState.html).
+There is no headless worker or background scheduling service. Expired Google
+authorization requires a foreground Backup/Restore tap; automatic backups never
+open a consent dialog.
 
 ## Reset Everything
 
@@ -124,9 +163,9 @@ The existing reset entry has exactly two confirmation actions, **Cancel** and
 and Google Drive deletion. An unconnected dialog describes local deletion only.
 Nothing is deleted on cancellation or dismissal.
 
-After confirmation the coordinator blocks other operations, stops the foreground
-scheduler, and durably saves `resetPending` before touching the remote file. It
-then authorizes the currently committed account, deletes only this app's exact
+After confirmation the coordinator blocks other operations and durably saves
+`resetPending` before touching the remote file. It then authorizes the currently
+committed account, deletes only this app's exact
 backup matches, verifies each file is missing (404), and verifies the final search
 is empty. An already missing backup is success. Only then are progress/settings
 replaced with defaults and cloud account/sync metadata cleared in one commit.
@@ -165,11 +204,12 @@ Reference documentation: [Android Sign-In setup](https://pub.dev/packages/google
 
 ## Automated and manual verification
 
-Automated tests inject authentication, scheduling, Drive storage, and local storage.
+Automated tests inject authentication, Drive storage, local storage, and lifecycle events.
 HTTP transport tests use `http/testing.dart` and never reach live Google APIs.
 Coverage includes first connection, automatic authoritative restore, Option A,
-immediate upload, 12-hour eligibility, unchanged suppression, scheduler stop/start,
-overdue resume/startup, retry, account switching, mismatched identities, corrupt
+immediate manual/close/streak-loss/earned-streak uploads, lifecycle deduplication, no periodic
+uploads, pending event recovery, concurrent event revisions, account switching,
+mismatched identities, corrupt
 checksums/versions, authentication failure, concurrent operations, reset cancel,
 cloud/local reset, already missing files, deletion failure, failed local commit,
 interrupted reset recovery, and prevention of post-reset backup recreation.
@@ -184,8 +224,12 @@ Required real Android checks (not exercised against a live Google account here):
    cancel a switch and verify subsequent uploads still use the committed account.
 4. Test network loss, revoked permission, and expired authorization, including
    reconnecting the committed identity after process death.
-5. Change progress, advance eligibility in a debug fixture, background/resume,
-   and confirm overdue retry and no overlap with account/reset operations.
+5. Change progress, background or close the app, and verify one latest backup
+   per close. Test Home, Back, app switching, offline close, and next-launch
+   recovery. Complete Isha's third dua after every earlier prayer meets the
+   minimum and verify one backup with the increased streak. Lose a streak in a
+   debug fixture and verify one zero-streak backup on rollover/next launch.
+   Confirm no scheduled uploads or overlap with account/reset operations.
 6. Cancel reset; confirm reset; test offline deletion failure; interrupt after
    remote deletion; restart and explicitly retry. Verify another account's
    backup and unrelated private app-data files survive.
@@ -216,7 +260,7 @@ manual flows above remain to be verified on a device with Google Play services.
 | --- | --- |
 | `lib/core/backup/cloud_backup_coordinator.dart` | Serialized cloud operations, account transitions, retries, reset recovery |
 | `lib/core/backup/cloud_backup_format.dart` | Versioned checksummed cloud envelope |
-| `lib/core/backup/cloud_ports.dart` | Mockable auth/Drive/scheduler contracts and foreground scheduler |
+| `lib/core/backup/cloud_ports.dart` | Mockable authentication and Drive contracts |
 | `lib/core/backup/google_drive_backup.dart` | Google account authorization and Drive REST transport |
 | `lib/core/storage/progress_repository.dart` | Account metadata inside the progress snapshot; metadata-safe count writes |
 | `lib/features/counter/counter_controller.dart` | Staged atomic restore/reset and nonblocking synchronization metadata commits |

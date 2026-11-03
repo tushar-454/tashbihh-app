@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
@@ -8,21 +8,21 @@ import 'cloud_backup_format.dart';
 import 'cloud_ports.dart';
 
 class CloudBackupCoordinator extends ChangeNotifier {
-  CloudBackupCoordinator({
-    required this.controller,
-    required this.auth,
-    required this.scheduler,
-  }) : format = CloudBackupFormat(BackupSerializer(controller.config));
+  CloudBackupCoordinator({required this.controller, required this.auth})
+    : format = CloudBackupFormat(BackupSerializer(controller.config)) {
+    controller.addListener(_controllerChanged);
+  }
 
   final CounterController controller;
   final BackupAuth auth;
-  final BackupScheduler scheduler;
   final CloudBackupFormat format;
-  static const interval = Duration(hours: 12);
   bool busy = false;
   bool _disposed = false;
   bool _foreground = false;
-  DateTime? _retryAfter;
+  bool _automaticBackup = false;
+  String? _failedDailyReset;
+  int? _failedCloseBackup;
+  String? _failedStreakEarned;
   String? message;
   Map<String, dynamic> get _metadata => controller.repository.cloudMetadata;
   CloudAccount? get account {
@@ -31,6 +31,10 @@ class CloudBackupCoordinator extends ChangeNotifier {
   }
 
   bool get resetPending => _metadata['resetPending'] == true;
+  String? get _pendingDailyReset => _metadata['dailyResetPending'] as String?;
+  int? get _pendingCloseBackup => _metadata['closeBackupPending'] as int?;
+  String? get _pendingStreakEarned =>
+      _metadata['streakEarnedPending'] as String?;
   DateTime? get lastSuccessfulBackup =>
       DateTime.tryParse(_metadata['lastBackup'] as String? ?? '');
 
@@ -57,17 +61,25 @@ class CloudBackupCoordinator extends ChangeNotifier {
     notifyListeners();
     try {
       await operation();
-      _retryAfter = null;
+      _failedDailyReset = null;
+      _failedCloseBackup = null;
+      _failedStreakEarned = null;
     } catch (error) {
+      // Retry failed events on resume, another close, or an explicit tap. No
+      // periodic timer or listener notification should repeatedly retry them.
+      _failedDailyReset = _pendingDailyReset;
+      _failedCloseBackup = _pendingCloseBackup;
+      _failedStreakEarned = _pendingStreakEarned;
       _status(
         error is BackupException ? error.message : 'Cloud operation failed. Local progress remains active. Check your connection and free device storage before retrying.',
       );
       rethrow;
     } finally {
-      busy = false;
       controller.cloudLocked = false;
       controller.refresh(autoSelect: false);
+      busy = false;
       if (!_disposed) notifyListeners();
+      _controllerChanged();
     }
   }
 
@@ -86,26 +98,13 @@ class CloudBackupCoordinator extends ChangeNotifier {
     return payload;
   }
 
-  String _fingerprint() => format.digest(
-    utf8.encode(
-      jsonEncode({
-        'state': controller.state.toJson(),
-        'settings': controller.settings.toJson(),
-      }),
-    ),
-  );
-
   Map<String, dynamic> _connected(
     CloudAccount account, {
     bool uploaded = false,
   }) => {
     'accountId': account.id,
     'email': account.email,
-    'lastCheck': controller.clock().toUtc().toIso8601String(),
     if (uploaded) 'lastBackup': controller.clock().toUtc().toIso8601String(),
-    // A restore may normalize dated progress, so its first scheduled backup
-    // should upload the normalized state rather than skipping it.
-    if (uploaded) 'fingerprint': _fingerprint(),
   };
 
   Future<void> connect() => _exclusive(() async {
@@ -153,21 +152,26 @@ class CloudBackupCoordinator extends ChangeNotifier {
         'Connect Backup/Restore first, or finish the pending reset.',
       );
     }
-    // Capture before network awaits. Later counts remain eligible for the next
-    // upload; synchronization metadata records this captured fingerprint only.
+    // Capture data and event revisions together before network awaits. A close
+    // or streak change during this upload requires a fresh follow-up snapshot.
     final payload = _payload();
-    final fingerprint = _fingerprint();
+    final dailyReset = _pendingDailyReset;
+    final closeBackup = _pendingCloseBackup;
+    final streakEarned = _pendingStreakEarned;
     _status('Backing up current progress…');
     final session = await auth.resume(selected, interactive: interactive);
     try {
       _verifyAccount(selected, session);
       await session.drive.upload(format.wrap(payload, controller.clock()));
-      await controller.saveCloudMetadata({
-        ..._metadata,
-        'lastBackup': controller.clock().toUtc().toIso8601String(),
-        'lastCheck': controller.clock().toUtc().toIso8601String(),
-        'fingerprint': fingerprint,
-      });
+      await controller.saveCloudMetadata(
+        {
+          ..._metadata,
+          'lastBackup': controller.clock().toUtc().toIso8601String(),
+        },
+        uploadedDailyReset: dailyReset,
+        uploadedCloseBackup: closeBackup,
+        uploadedStreakEarned: streakEarned,
+      );
       _status('Backup successful.');
     } finally {
       session.drive.close();
@@ -183,7 +187,6 @@ class CloudBackupCoordinator extends ChangeNotifier {
   }
 
   Future<void> resetEverything() => _exclusive(() async {
-    scheduler.stop();
     final selected = account;
     if (selected != null) {
       // Durable intent survives termination after cloud deletion. Startup never
@@ -206,34 +209,54 @@ class CloudBackupCoordinator extends ChangeNotifier {
     );
   }, lockData: true);
 
-  Future<void> checkDue() async {
-    if (_disposed || busy || account == null || resetPending) return;
-    final now = controller.clock();
-    if (_retryAfter != null && now.isBefore(_retryAfter!)) return;
-    final checked = DateTime.tryParse(_metadata['lastCheck'] as String? ?? '');
-    if (checked != null && now.difference(checked) < interval) return;
+  Future<void> retryPending() {
+    _failedDailyReset = null;
+    _failedCloseBackup = null;
+    _failedStreakEarned = null;
+    return _backupPending();
+  }
+
+  bool get _hasPendingBackup =>
+      (_pendingCloseBackup != null &&
+          _pendingCloseBackup != _failedCloseBackup) ||
+      (_foreground &&
+          ((_pendingDailyReset != null &&
+                  _pendingDailyReset != _failedDailyReset) ||
+              (_pendingStreakEarned != null &&
+                  _pendingStreakEarned != _failedStreakEarned)));
+
+  Future<void> _backupPending() async {
+    if (_disposed ||
+        busy ||
+        _automaticBackup ||
+        account == null ||
+        resetPending) {
+      return;
+    }
+    _automaticBackup = true;
     try {
-      await _exclusive(() async {
-        controller.refresh(autoSelect: false);
-        if (_metadata['fingerprint'] == _fingerprint()) {
-          await controller.saveCloudMetadata({
-            ..._metadata,
-            'lastCheck': now.toUtc().toIso8601String(),
-          });
-          return;
-        }
-        await _backup(interactive: false);
-      });
+      controller.refresh(autoSelect: false);
+      if (_hasPendingBackup) {
+        await _exclusive(() => _backup(interactive: false));
+      }
     } catch (_) {
-      _retryAfter = now.add(const Duration(minutes: 5));
+      // The durable event markers survive failure and process termination.
+    } finally {
+      _automaticBackup = false;
+    }
+    _controllerChanged();
+  }
+
+  void _controllerChanged() {
+    if (!_disposed && !busy && !_automaticBackup && _hasPendingBackup) {
+      unawaited(_backupPending());
     }
   }
 
   void resume() {
     _foreground = true;
-    scheduler.start(checkDue);
     // Caller deliberately does not block counter startup on the network.
-    checkDue();
+    unawaited(retryPending());
     if (resetPending) {
       _status(
         'Reset was interrupted. Retry Reset Everything to finish safely.',
@@ -241,15 +264,23 @@ class CloudBackupCoordinator extends ChangeNotifier {
     }
   }
 
-  void suspend() {
+  void suspend({bool backupOnClose = true}) {
+    final wasForeground = _foreground;
     _foreground = false;
-    scheduler.stop();
+    if (_disposed ||
+        !wasForeground ||
+        !backupOnClose ||
+        controller.dataLocked) {
+      return;
+    }
+    controller.requestCloseBackup();
+    _controllerChanged();
   }
 
   @override
   void dispose() {
     _disposed = true;
-    if (_foreground) scheduler.stop();
+    controller.removeListener(_controllerChanged);
     super.dispose();
   }
 }

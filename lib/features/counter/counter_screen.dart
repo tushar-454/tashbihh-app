@@ -127,7 +127,11 @@ class _CounterScreenState extends State<CounterScreen>
       c.prayerTimes?.resume(_explainLocation);
     } else {
       c.stopClock();
-      cloud?.suspend();
+      if (state == AppLifecycleState.hidden ||
+          state == AppLifecycleState.paused ||
+          state == AppLifecycleState.detached) {
+        cloud?.suspend();
+      }
       c.prayerTimes?.suspend();
       widget.device.cancelFeedback();
       unawaited(c.flush());
@@ -142,7 +146,7 @@ class _CounterScreenState extends State<CounterScreen>
     unawaited(_clockEvents?.cancel());
     c.removeListener(_changed);
     cloud?.removeListener(_cloudChanged);
-    cloud?.suspend();
+    cloud?.suspend(backupOnClose: false);
     widget.device.removeListener(_deviceChanged);
     _pulse.dispose();
     super.dispose();

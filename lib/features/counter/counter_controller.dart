@@ -101,7 +101,23 @@ class CounterController extends ChangeNotifier {
     now = clock();
     prayerTimes?.observeClock(now);
     _scheduleRefresh();
+    final previousDate = state.date;
+    final previousStreak = state.streak;
     var changed = StreakRules.rollForward(state, config, now);
+    if (state.date != previousDate && previousStreak > 0 && state.streak == 0) {
+      _markStreakEvent(
+        repository.cloudMetadata,
+        'dailyResetPending',
+        state.date,
+      );
+    }
+    if (state.streak > previousStreak) {
+      _markStreakEvent(
+        repository.cloudMetadata,
+        'streakEarnedPending',
+        state.date,
+      );
+    }
     final active = activePrayer;
     if (autoSelect &&
         !isCustom &&
@@ -124,7 +140,13 @@ class CounterController extends ChangeNotifier {
       final next = count + 1;
       progress.counts[dua.id] = next;
       if (next >= dua.target) progress.completed.add(dua.id);
-      StreakRules.evaluate(state, config, now);
+      if (StreakRules.evaluate(state, config, now)) {
+        _markStreakEvent(
+          repository.cloudMetadata,
+          'streakEarnedPending',
+          state.date,
+        );
+      }
     }
     _changed();
     return true;
@@ -193,13 +215,39 @@ class CounterController extends ChangeNotifier {
 
   /// Ordinary uploads save bookkeeping through the progress write queue without
   /// freezing taps. Later count writes inherit the committed cloud metadata.
-  Future<void> saveCloudMetadata(Map<String, dynamic> metadata) {
+  Future<void> saveCloudMetadata(
+    Map<String, dynamic> metadata, {
+    String? uploadedDailyReset,
+    int? uploadedCloseBackup,
+    String? uploadedStreakEarned,
+  }) {
     final result = _writes.then((_) async {
+      final next = Map<String, dynamic>.of(metadata);
+      final pendingEvents = {
+        'dailyResetPending': uploadedDailyReset,
+        'closeBackupPending': uploadedCloseBackup,
+        'streakEarnedPending': uploadedStreakEarned,
+      };
+      final captured = <String, dynamic>{};
+      for (final entry in pendingEvents.entries) {
+        final pending = repository.cloudMetadata[entry.key];
+        captured[entry.key] = pending;
+        if (pending != null && pending != entry.value) {
+          next[entry.key] = pending;
+        } else {
+          next.remove(entry.key);
+        }
+      }
       await repository.replace(
-        repository.encode(state, settings, cloud: metadata),
+        repository.encode(state, settings, cloud: next),
         repository.encode(state, settings),
       );
-      repository.cloudMetadata = Map.of(metadata);
+      // New events during the native commit must survive in queued progress.
+      for (final entry in captured.entries) {
+        final latest = repository.cloudMetadata[entry.key];
+        if (latest != entry.value) next[entry.key] = latest;
+      }
+      repository.cloudMetadata = next;
     });
     // A reported metadata error must not poison later counter persistence.
     _writes = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
@@ -224,6 +272,9 @@ class CounterController extends ChangeNotifier {
       final restoredSettings = reset
           ? AppSettings()
           : backup?.settings ?? settings;
+      final committedMetadata = Map<String, dynamic>.of(
+        metadata ?? repository.cloudMetadata,
+      );
       final localNow = clock();
       if (backup != null || reset) {
         if (candidate.date.compareTo(dateKey(localNow)) > 0) {
@@ -242,7 +293,18 @@ class CounterController extends ChangeNotifier {
             'lastStreakDate': candidate.lastStreakDate,
           };
         }
+        final previousDate = candidate.date;
+        final previousStreak = candidate.streak;
         StreakRules.rollForward(candidate, config, localNow);
+        if (candidate.date != previousDate &&
+            previousStreak > 0 &&
+            candidate.streak == 0) {
+          _markStreakEvent(
+            committedMetadata,
+            'dailyResetPending',
+            candidate.date,
+          );
+        }
         final active = (prayerTimes?.scheduleFor(localNow) ?? config.schedule)
             .activePrayer(localNow);
         if (restoredSettings.mode == AppMode.prayer && active != null) {
@@ -250,10 +312,14 @@ class CounterController extends ChangeNotifier {
         }
       }
       await repository.replace(
-        repository.encode(candidate, restoredSettings, cloud: metadata),
+        repository.encode(
+          candidate,
+          restoredSettings,
+          cloud: committedMetadata,
+        ),
         repository.encode(state, settings),
       );
-      if (metadata != null) repository.cloudMetadata = Map.of(metadata);
+      repository.cloudMetadata = committedMetadata;
       state = candidate;
       settings = restoredSettings;
       now = localNow;
@@ -269,6 +335,32 @@ class CounterController extends ChangeNotifier {
   void _changed() {
     _persist();
     if (!_disposed) notifyListeners();
+  }
+
+  void _markStreakEvent(
+    Map<String, dynamic> metadata,
+    String event,
+    String date,
+  ) {
+    if (metadata['accountId'] is String &&
+        metadata['email'] is String &&
+        metadata['resetPending'] != true) {
+      // Persist with the changed streak/progress, including startup evaluation
+      // before the cloud coordinator has attached its listener.
+      metadata[event] = date;
+    }
+  }
+
+  void requestCloseBackup() {
+    final metadata = repository.cloudMetadata;
+    if (metadata['accountId'] is! String ||
+        metadata['email'] is! String ||
+        metadata['resetPending'] == true) {
+      return;
+    }
+    final pending = metadata['closeBackupPending'] as int? ?? 0;
+    metadata['closeBackupPending'] = pending + 1;
+    _persist();
   }
 
   void _persist() {

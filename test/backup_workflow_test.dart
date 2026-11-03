@@ -18,11 +18,7 @@ void main() {
       h = Harness();
       device = TestDevice();
       auth = FakeAuth();
-      cloud = CloudBackupCoordinator(
-        controller: h.controller,
-        auth: auth,
-        scheduler: FakeScheduler(),
-      );
+      cloud = CloudBackupCoordinator(controller: h.controller, auth: auth);
       addTearDown(() {
         cloud.dispose();
         h.controller.dispose();
@@ -83,6 +79,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(cloud.account!.id, 'b');
     expect(auth.drives['b']!.uploads, 1);
+  });
+
+  workflow(
+    'background lifecycle uploads once per close and ignores inactive focus',
+    (tester) async {
+      await cloud.connect();
+      await launch(tester);
+      h.controller.increment();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pumpAndSettle();
+      expect(auth.drives['a']!.uploads, 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      expect(auth.drives['a']!.uploads, 2);
+      final saved = cloud.format
+          .validate(auth.drives['a']!.bytes!)
+          .state(h.config);
+      expect(saved.prayers['fajr']!.counts['subhanallah'], 1);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(auth.drives['a']!.uploads, 2);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pumpAndSettle();
+      expect(auth.drives['a']!.uploads, 3);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+    },
+  );
+
+  workflow('removing the screen does not create a close backup', (
+    tester,
+  ) async {
+    await cloud.connect();
+    await launch(tester);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    expect(auth.drives['a']!.uploads, 1);
   });
 
   workflow(

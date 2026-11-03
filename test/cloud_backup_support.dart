@@ -69,19 +69,3 @@ class FakeAuth implements BackupAuth {
     return CloudSession(selected, drives[selected.id]!);
   }
 }
-
-class FakeScheduler implements BackupScheduler {
-  Future<void> Function()? check;
-  int starts = 0, stops = 0;
-  @override
-  void start(Future<void> Function() callback) {
-    starts++;
-    check = callback;
-  }
-
-  @override
-  void stop() {
-    stops++;
-    check = null;
-  }
-}
