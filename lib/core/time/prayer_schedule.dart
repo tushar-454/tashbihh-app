@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../config/tasbih_config.dart';
+import '../localization/app_localizations.dart';
 
 /// Fixed local civil-time windows. Starts inclusive; ends exclusive.
 /// A nonzero end grace explicitly opts into extending configured inactive gaps.
@@ -22,11 +23,16 @@ class PrayerSchedule {
   /// last available schedule until the current day's synchronization succeeds.
   final int? earlyIshaEnd;
 
-  String windowLabel(String id) {
+  String windowLabel(String id) => windowMessage(id).english;
+  AppMessage windowMessage(String id) {
     final prayer = prayers.firstWhere((p) => p.id == id);
+    final times = prayer.windowLabel.split(' – ');
     return id == 'isha' && earlyIshaEnd != null
-        ? '${prayer.windowLabel.split(' – ').first} – next Fajr (saved times if offline)'
-        : prayer.windowLabel;
+        ? AppMessage('isha_window', {'start': times.first})
+        : AppMessage('prayer_window', {
+            'start': times.first,
+            'end': times.last,
+          });
   }
 
   int endOf(PrayerDefinition prayer) {

@@ -2,8 +2,16 @@ package com.example.tashbihh
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
 class PrayerNotificationPolicyTest {
+    private fun message(event: PrayerEvent, now: Long, counts: Map<String, Int>) =
+        PrayerNotificationPolicy.message(event, now, counts, PrayerTranslations.forContext(RuntimeEnvironment.getApplication()))
     private val minute = PrayerNotificationPolicy.MINUTE
     private val window = PrayerWindow("dhuhr", 12 * 60 * minute, 16 * 60 * minute)
     private val day = PrayerDay("2026-11-04", 0, 1440 * minute, listOf(window), 19 * 60 * minute, 1440 * minute)
@@ -60,7 +68,7 @@ class PrayerNotificationPolicyTest {
     @Test fun `all six completion levels produce truthful respectful summaries`() {
         for (n in 0..5) {
             val values = PrayerNotificationPolicy.prayers.mapIndexed { i, p -> p to if (i < n) 3 else 2 }.toMap()
-            val text = PrayerNotificationPolicy.message(summary, summary.at, values)
+            val text = message(summary, summary.at, values)
             if (n == 5) assertTrue(text.title.contains("All Goals Completed"))
             else {
                 assertTrue(text.body.contains("$n of 5"))
@@ -72,10 +80,10 @@ class PrayerNotificationPolicyTest {
     }
 
     @Test fun `only incomplete active Isha receives an invitation`() {
-        assertTrue(PrayerNotificationPolicy.message(summary, summary.at, counts(0)).body.contains("Isha is still available"))
-        assertFalse(PrayerNotificationPolicy.message(summary, summary.end, counts(0)).body.contains("still available"))
-        assertFalse(PrayerNotificationPolicy.message(summary, summary.at, mapOf("isha" to 3)).body.contains("still available"))
-        assertFalse(PrayerNotificationPolicy.message(summary, summary.at, counts(0)).body.contains("finish Dhuhr"))
+        assertTrue(message(summary, summary.at, counts(0)).body.contains("Isha is still available"))
+        assertFalse(message(summary, summary.end, counts(0)).body.contains("still available"))
+        assertFalse(message(summary, summary.at, mapOf("isha" to 3)).body.contains("still available"))
+        assertFalse(message(summary, summary.at, counts(0)).body.contains("finish Dhuhr"))
     }
 
     @Test fun `summary plus three elapsed hours retains its source date after midnight`() {
@@ -83,12 +91,12 @@ class PrayerNotificationPolicyTest {
         val late = PrayerNotificationPolicy.events(listOf(lateDay)).last()
         assertEquals(25 * 60 * minute, late.at)
         assertEquals(day.date, late.date)
-        assertFalse(PrayerNotificationPolicy.message(late, late.at, counts(0)).body.contains("still available"))
+        assertFalse(message(late, late.at, counts(0)).body.contains("still available"))
     }
 
     @Test fun `delivery reads supplied latest progress and consumed ledger suppresses duplicates`() {
-        val first = PrayerNotificationPolicy.message(summary, summary.at, emptyMap())
-        val latest = PrayerNotificationPolicy.message(summary, summary.at, PrayerNotificationPolicy.prayers.associateWith { 3 })
+        val first = message(summary, summary.at, emptyMap())
+        val latest = message(summary, summary.at, PrayerNotificationPolicy.prayers.associateWith { 3 })
         assertNotEquals(first.title, latest.title)
         assertFalse(PrayerNotificationPolicy.deliverable(summary, summary.at, counts(0), setOf(summary.key)))
         assertFalse(PrayerNotificationPolicy.pending(summary, 0, counts(0), setOf(summary.key)))
@@ -96,7 +104,7 @@ class PrayerNotificationPolicyTest {
 
     @Test fun `late reminders describe actual remaining minutes and stale summary is dropped`() {
         val event = reminders[0]
-        assertTrue(PrayerNotificationPolicy.message(event, event.at + 20 * minute, counts(1)).body.contains("about 10 minutes"))
+        assertTrue(message(event, event.at + 20 * minute, counts(1)).body.contains("about 10 minutes"))
         assertFalse(PrayerNotificationPolicy.deliverable(summary, summary.at + 6 * 60 * minute, counts(0), emptySet()))
     }
 }

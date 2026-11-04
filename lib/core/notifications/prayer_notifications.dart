@@ -6,6 +6,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../config/tasbih_config.dart';
+import '../localization/app_localizations.dart';
 import '../models/app_state.dart';
 import '../storage/progress_repository.dart';
 import '../time/prayer_schedule.dart';
@@ -118,18 +119,20 @@ class PrayerNotifications extends ChangeNotifier {
   final MethodChannel channel;
   VoidCallback? onTapAvailable;
   bool enabled = true, allowed = false, exact = false, busy = false;
-  String? error;
+  AppMessage? errorMessage;
+  String? get error => errorMessage?.english;
   String? _lastPlan;
   bool _disposed = false;
-  String get status =>
-      error ??
+  String get status => statusMessage.english;
+  AppMessage get statusMessage =>
+      errorMessage ??
       (!enabled
-          ? 'Off'
+          ? const AppMessage('off')
           : !allowed
-          ? 'Blocked in Android notification settings'
+          ? const AppMessage('notifications_blocked')
           : exact
-          ? 'On · precise alarms allowed'
-          : 'On · Android may delay reminders');
+          ? const AppMessage('notifications_precise')
+          : const AppMessage('notifications_delayed'));
 
   Future<void> refresh({bool requestPermission = false}) async {
     await _run(() async {
@@ -177,9 +180,9 @@ class PrayerNotifications extends ChangeNotifier {
     busy = true;
     try {
       await operation();
-      error = null;
+      errorMessage = null;
     } catch (_) {
-      error = 'Notification settings unavailable. Please retry.';
+      errorMessage = const AppMessage('notification_settings_failed');
     } finally {
       busy = false;
       if (!_disposed) notifyListeners();

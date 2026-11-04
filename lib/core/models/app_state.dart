@@ -1,4 +1,5 @@
 import '../config/tasbih_config.dart';
+import '../localization/app_localizations.dart';
 
 enum AppMode { prayer, custom }
 
@@ -23,13 +24,18 @@ int safeInt(dynamic value, int fallback, int min, int max) =>
 class AppSettings {
   AppSettings({
     this.vibrationIntensity = 40,
+    this.language = 'en',
     this.mode = AppMode.prayer,
     this.style = CounterStyle.classic,
   });
+  String language;
   int vibrationIntensity;
   AppMode mode;
   CounterStyle style;
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
+    language: AppLocalizations.supportedLanguage(
+      json[AppLocalizations.preferenceKey],
+    ),
     vibrationIntensity:
         safeInt(json['vibrationIntensity'], 40, 0, 100) ~/ 5 * 5,
     mode: json['mode'] == 'custom' ? AppMode.custom : AppMode.prayer,
@@ -38,6 +44,7 @@ class AppSettings {
         : CounterStyle.classic,
   );
   Map<String, dynamic> toJson() => {
+    AppLocalizations.preferenceKey: language,
     'vibrationIntensity': vibrationIntensity,
     'mode': mode.name,
     'style': style.name,

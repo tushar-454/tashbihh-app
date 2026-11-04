@@ -3,10 +3,18 @@ import 'dart:typed_data';
 
 import '../config/tasbih_config.dart';
 import '../models/app_state.dart';
+import '../localization/app_localizations.dart';
 
 class BackupException implements Exception {
-  const BackupException(this.message);
-  final String message;
+  const BackupException(this._key) : _arguments = const {}, _localized = false;
+  const BackupException.localized(this._key, [this._arguments = const {}])
+    : _localized = true;
+  final String _key;
+  final Map<String, Object> _arguments;
+  final bool _localized;
+  AppMessage get localizedMessage =>
+      _localized ? AppMessage(_key, _arguments) : AppMessage.raw(_key);
+  String get message => localizedMessage.english;
   @override
   String toString() => message;
 }
@@ -21,6 +29,8 @@ class ValidatedBackup {
   Map<String, dynamic> get data => jsonDecode(_data) as Map<String, dynamic>;
   AppState state(TasbihConfig config) =>
       AppState.fromJson(config, data['state']);
+  bool get hasLanguage =>
+      (data['settings'] as Map).containsKey(AppLocalizations.preferenceKey);
   AppSettings get settings => AppSettings.fromJson(data['settings']);
 }
 
@@ -49,14 +59,14 @@ class BackupSerializer {
 
   ValidatedBackup validate(List<int> bytes) {
     if (bytes.length > maxBytes) {
-      throw const BackupException('Backup is too large. Maximum size is 1 MB.');
+      throw const BackupException.localized('backup_max_size');
     }
     try {
       final root = _map(jsonDecode(utf8.decode(bytes)));
-      _require(root['format'] == format, 'This is not a Tasbih backup.');
+      _require(root['format'] == format, 'backup_wrong_format');
       _require(
         root['schemaVersion'] is int && root['schemaVersion'] == 1,
-        'Unsupported backup version. Use an app that supports this backup.',
+        'backup_version',
       );
       final stamp = root['exportedAt'];
       _require(
@@ -64,18 +74,18 @@ class BackupSerializer {
             RegExp(
               r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$',
             ).hasMatch(stamp),
-        'Backup timestamp must include a timezone.',
+        'backup_timezone',
       );
       final timestamp = DateTime.parse(stamp as String);
       _date(stamp.substring(0, 10));
       _require(
         timestamp.year >= 1 && timestamp.year <= 9999,
-        'Invalid backup timestamp.',
+        'backup_timestamp',
       );
       final time = stamp.substring(11, 19).split(':').map(int.parse).toList();
       _require(
         time[0] < 24 && time[1] < 60 && time[2] < 60,
-        'Invalid backup timestamp.',
+        'backup_timestamp',
       );
       if (!stamp.endsWith('Z')) {
         final offset = stamp
@@ -83,37 +93,31 @@ class BackupSerializer {
             .split(':')
             .map(int.parse)
             .toList();
-        _require(
-          offset[0] <= 23 && offset[1] < 60,
-          'Invalid timestamp offset.',
-        );
+        _require(offset[0] <= 23 && offset[1] < 60, 'backup_offset');
       }
       _require(
         root['appVersion'] is String &&
             (root['appVersion'] as String).isNotEmpty &&
             (root['appVersion'] as String).length <= 100,
-        'Missing app version.',
+        'backup_app_version',
       );
       final data = _map(root['data']);
       final state = _map(data['state']);
       _daily(state);
       _require(
         config.prayers.any((p) => p.id == state['selectedPrayer']),
-        'Invalid selected prayer.',
+        'backup_prayer',
       );
       final target = _integer(state['customTarget'], 1, 1000);
       _integer(state['customCount'], 0, target);
       if (state.containsKey('restoredDay')) _daily(_map(state['restoredDay']));
       final settings = _map(data['settings']);
       final vibration = _integer(settings['vibrationIntensity'], 0, 100);
-      _require(vibration % 5 == 0, 'Invalid vibration intensity.');
-      _require(
-        ['prayer', 'custom'].contains(settings['mode']),
-        'Invalid app mode.',
-      );
+      _require(vibration % 5 == 0, 'backup_vibration');
+      _require(['prayer', 'custom'].contains(settings['mode']), 'backup_mode');
       _require(
         ['classic', 'modern'].contains(settings['style']),
-        'Invalid counter style.',
+        'backup_style',
       );
       return ValidatedBackup._(
         timestamp,
@@ -123,67 +127,50 @@ class BackupSerializer {
     } on BackupException {
       rethrow;
     } catch (_) {
-      throw const BackupException(
-        'Invalid backup JSON or missing required fields.',
-      );
+      throw const BackupException.localized('backup_json');
     }
   }
 
   void _daily(Map<String, dynamic> state) {
     final date = _date(state['date']);
     final streak = _integer(state['streak'], 0, 2147483647);
-    _require(state.containsKey('lastStreakDate'), 'Missing streak metadata.');
+    _require(state.containsKey('lastStreakDate'), 'backup_streak_metadata');
     if (state['lastStreakDate'] != null) {
       final last = _date(state['lastStreakDate']);
-      _require(
-        last.compareTo(date) <= 0,
-        'Streak date cannot follow progress date.',
-      );
+      _require(last.compareTo(date) <= 0, 'backup_streak_date');
     }
     _require(
       streak == 0 || state['lastStreakDate'] != null,
-      'Missing successful streak date.',
+      'backup_success_date',
     );
     final prayers = _map(state['prayers']);
-    _require(
-      prayers.length == config.prayers.length,
-      'Prayer configuration is incompatible.',
-    );
+    _require(prayers.length == config.prayers.length, 'backup_configuration');
     for (final prayer in config.prayers) {
       final p = _map(prayers[prayer.id]);
       final duas = config.forPrayer(prayer.id);
-      _require(
-        duas.any((d) => d.id == p['selectedDuaId']),
-        'Invalid selected Dhikr.',
-      );
+      _require(duas.any((d) => d.id == p['selectedDuaId']), 'backup_dhikr');
       final counts = _map(p['counts']);
       for (final entry in counts.entries) {
-        _require(
-          duas.any((d) => d.id == entry.key),
-          'Unknown Dhikr in backup.',
-        );
+        _require(duas.any((d) => d.id == entry.key), 'backup_unknown_dhikr');
         _integer(entry.value, 0, 2147483647);
       }
       final completed = p['completed'];
       _require(
         completed is List && completed.every((v) => v is String),
-        'Invalid completion list.',
+        'backup_completion',
       );
       final ids = (completed as List).cast<String>();
-      _require(
-        ids.toSet().length == ids.length,
-        'Duplicate completion entries.',
-      );
+      _require(ids.toSet().length == ids.length, 'backup_duplicates');
       for (final id in ids) {
         _require(
           duas.any((d) => d.id == id && (counts[id] ?? 0) >= d.target),
-          'Completion does not match count.',
+          'backup_count_mismatch',
         );
       }
       for (final d in duas) {
         _require(
           ((counts[d.id] ?? 0) >= d.target) == ids.contains(d.id),
-          'Incomplete completion metadata.',
+          'backup_incomplete_metadata',
         );
       }
     }
@@ -196,37 +183,34 @@ class BackupSerializer {
     );
     _require(
       !eligible || (state['lastStreakDate'] == date && streak > 0),
-      'Completed day is missing its streak evaluation.',
+      'backup_day_evaluation',
     );
   }
 
   static Map<String, dynamic> _map(dynamic value) {
-    _require(value is Map<String, dynamic>, 'Missing required backup object.');
+    _require(value is Map<String, dynamic>, 'backup_object');
     return value as Map<String, dynamic>;
   }
 
   static int _integer(dynamic value, int min, int max) {
-    _require(
-      value is int && value >= min && value <= max,
-      'Invalid counter or numeric setting.',
-    );
+    _require(value is int && value >= min && value <= max, 'backup_number');
     return value as int;
   }
 
   static String _date(dynamic value) {
     _require(
       value is String && RegExp(r'^\d{4}-\d\d-\d\d$').hasMatch(value),
-      'Invalid progress date.',
+      'backup_date',
     );
     final parsed = DateTime.tryParse(value as String);
     _require(
       parsed != null && parsed.year >= 1 && dateKey(parsed) == value,
-      'Invalid calendar date.',
+      'backup_calendar',
     );
     return value;
   }
 
   static void _require(bool valid, String message) {
-    if (!valid) throw BackupException(message);
+    if (!valid) throw BackupException.localized(message);
   }
 }

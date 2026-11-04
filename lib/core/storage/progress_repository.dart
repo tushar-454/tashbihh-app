@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/tasbih_config.dart';
 import '../models/app_state.dart';
+import '../localization/app_localizations.dart';
 
 abstract class SnapshotStore {
   Future<String?> read();
@@ -24,7 +25,7 @@ class PreferencesStore implements SnapshotStore {
   @override
   Future<void> write(String value) async {
     if (!await preferences.setString(storageKey, value)) {
-      throw StateError('Could not save progress');
+      throw StateError(const AppMessage('save_failed').english);
     }
   }
 }
@@ -85,9 +86,7 @@ class ProgressRepository {
       try {
         await store.write(previous);
       } catch (_) {
-        throw StateError(
-          'Restore failed and storage recovery could not be verified. Your active data is unchanged. Free storage and restart before trying again.',
-        );
+        throw StateError(const AppMessage('restore_storage_failed').english);
       }
       rethrow;
     }

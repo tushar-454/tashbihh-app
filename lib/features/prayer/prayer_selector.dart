@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations.dart';
+
 import '../../app/theme/tasbih_theme.dart';
 import '../counter/counter_controller.dart';
 
@@ -28,17 +30,27 @@ class PrayerSelector extends StatelessWidget {
     final enabled = c.canSelect(p.id);
     final locked = c.schedule.ended(p.id, c.now);
     final status = c.schedule.eligible(p.id, c.now)
-        ? 'Available now'
-        : 'Not available at this time';
+        ? context.tr('available')
+        : context.tr('unavailable');
     return Tooltip(
-      message:
-          '${p.label} · ${p.arabic}\n${c.schedule.windowLabel(p.id)} · $status${locked ? ' · Locked' : ''}',
+      message: context.tr('prayer_tooltip', {
+        'prayer': context.tr('prayer_${p.id}'),
+        'arabic': p.arabic,
+        'window': context.l10n.message(c.schedule.windowMessage(p.id)),
+        'status': status,
+        'locked': locked ? context.tr('lock_suffix') : '',
+      }),
       child: Semantics(
         selected: selected,
         button: true,
         enabled: enabled,
-        label:
-            '${p.label}, ${p.arabic}, ${c.schedule.windowLabel(p.id)}, $status${locked ? ', locked' : ''}',
+        label: context.tr('prayer_semantics', {
+          'prayer': context.tr('prayer_${p.id}'),
+          'arabic': p.arabic,
+          'window': context.l10n.message(c.schedule.windowMessage(p.id)),
+          'status': status,
+          'locked': locked ? context.tr('lock_semantics_suffix') : '',
+        }),
         excludeSemantics: true,
         child: Opacity(
           opacity: enabled ? 1 : .45,
@@ -81,7 +93,7 @@ class PrayerSelector extends StatelessWidget {
                         ),
                         const SizedBox(height: 3.2),
                         Text(
-                          p.label,
+                          context.tr('prayer_${p.id}'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

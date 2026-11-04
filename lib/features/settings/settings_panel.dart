@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations.dart';
+
 import '../../app/theme/tasbih_theme.dart';
 import '../../core/models/app_state.dart';
 import '../../core/notifications/prayer_notifications.dart';
@@ -29,7 +31,7 @@ class SettingsPanel extends StatelessWidget {
     final c = controller;
     return Semantics(
       namesRoute: true,
-      label: 'Settings',
+      label: context.tr('settings'),
       child: Container(
         width: 245,
         padding: const EdgeInsets.all(14.4),
@@ -50,27 +52,43 @@ class SettingsPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'SETTINGS',
-                style: TextStyle(
-                  color: TasbihTheme.gold,
-                  fontSize: 10.88,
-                  letterSpacing: 1.3,
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.tr('settings_heading'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: TasbihTheme.gold,
+                        fontSize: 10.88,
+                        letterSpacing: 1.3,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Tooltip(
+                    message: context.tr('language'),
+                    child: LanguageBadges(controller: c),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.only(left: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _label(
-                      'Vibration Intensity: ${c.settings.vibrationIntensity}ms',
+                      context.tr('vibration', {
+                        'value': c.settings.vibrationIntensity,
+                      }),
                     ),
                     Slider(
                       key: const Key('vibration-slider'),
-                      label: '${c.settings.vibrationIntensity}ms',
+                      label: context.tr('milliseconds', {
+                        'value': c.settings.vibrationIntensity,
+                      }),
                       min: 0,
                       max: 100,
                       divisions: 20,
@@ -84,16 +102,18 @@ class SettingsPanel extends StatelessWidget {
                 ),
               ),
               _group(
-                'App mode',
+                context.tr('app_mode'),
                 SettingsAction(
                   key: const Key('mode-toggle'),
-                  label: c.isCustom ? 'Prayer Mode' : 'Custom Mode',
+                  label: c.isCustom
+                      ? context.tr('prayer_mode')
+                      : context.tr('custom_mode'),
                   onPressed: c.toggleMode,
                 ),
               ),
               if (c.isCustom)
                 _group(
-                  'Custom target: ${c.state.customTarget}',
+                  context.tr('custom_target', {'target': c.state.customTarget}),
                   Slider(
                     key: const Key('target-slider'),
                     label: '${c.state.customTarget}',
@@ -105,38 +125,41 @@ class SettingsPanel extends StatelessWidget {
                   ),
                 ),
               _group(
-                'Counter style',
+                context.tr('counter_style'),
                 SettingsAction(
                   key: const Key('style-toggle'),
                   label: c.settings.style == CounterStyle.classic
-                      ? 'Modern'
-                      : 'Classic',
+                      ? context.tr('modern')
+                      : context.tr('classic'),
                   onPressed: c.toggleStyle,
                 ),
               ),
               _group(
-                'Screen',
+                context.tr('screen'),
                 SettingsAction(
                   key: const Key('fullscreen-toggle'),
-                  label: device.fullscreen ? 'Exit Full Screen' : 'Full Screen',
+                  label: device.fullscreen
+                      ? context.tr('exit_fullscreen')
+                      : context.tr('fullscreen'),
                   onPressed: device.toggleFullscreen,
                 ),
               ),
-              _group('Prayer Notifications', _notificationControls()),
               _group(
-                'Backup & Restore',
+                context.tr('prayer_notifications'),
+                _notificationControls(context),
+              ),
+              _group(
+                context.tr('backup_restore_heading'),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     SettingsAction(
                       key: const Key('backup-restore'),
-                      label: 'Backup/Restore',
+                      label: context.tr('backup_restore'),
                       onPressed: backupBusy ? null : onBackup,
                     ),
                     const SizedBox(height: 5.6),
-                    _label(
-                      backupStatus ?? 'Connect Google Drive to back up or restore progress.',
-                    ),
+                    _label(backupStatus ?? context.tr('connect_drive')),
                     if (backupLoading)
                       const Padding(
                         padding: EdgeInsets.all(8),
@@ -154,7 +177,7 @@ class SettingsPanel extends StatelessWidget {
               const SizedBox(height: 13.6),
               SettingsAction(
                 key: const Key('reset-all'),
-                label: 'Reset all data',
+                label: context.tr('reset_all'),
                 danger: true,
                 onPressed: backupBusy ? null : onReset,
               ),
@@ -165,31 +188,31 @@ class SettingsPanel extends StatelessWidget {
     );
   }
 
-  Widget _notificationControls() {
+  Widget _notificationControls(BuildContext context) {
     final n = notifications;
-    if (n == null) return _label('Available in the Android app.');
+    if (n == null) return _label(context.tr('android_only'));
     return ListenableBuilder(
       listenable: n,
       builder: (context, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Semantics(
-            label: 'Prayer Notifications',
+            label: context.tr('prayer_notifications'),
             child: Switch.adaptive(
               key: const Key('prayer-notifications-toggle'),
               value: n.enabled,
               onChanged: n.busy ? null : (value) => n.setEnabled(value),
             ),
           ),
-          _label(n.status),
+          _label(context.l10n.message(n.statusMessage)),
           if (n.enabled && !n.allowed)
             SettingsAction(
-              label: 'Android notification settings',
+              label: context.tr('android_notification_settings'),
               onPressed: () => n.openSettings(),
             ),
           if (n.enabled && n.allowed && !n.exact)
             SettingsAction(
-              label: 'Allow precise reminders (optional)',
+              label: context.tr('precise_reminders'),
               onPressed: () => n.openSettings(alarms: true),
             ),
         ],
@@ -235,13 +258,65 @@ class SettingsAction extends StatelessWidget {
       minimumSize: const Size(0, 32),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       padding: const EdgeInsets.symmetric(vertical: 7.68, horizontal: 8.8),
-      textStyle: const TextStyle(
-        fontFamily: 'IBM Plex Sans Arabic',
+      textStyle: TextStyle(
+        fontFamily: context.l10n.fontFamily,
+        fontFamilyFallback: TasbihTheme.fallbackFonts,
         fontSize: 12,
         height: 1.2,
         fontWeight: FontWeight.w500,
       ),
     ),
     child: Text(label, textAlign: TextAlign.center),
+  );
+}
+
+class LanguageBadges extends StatelessWidget {
+  const LanguageBadges({super.key, required this.controller});
+  final CounterController controller;
+
+  @override
+  Widget build(BuildContext context) => Wrap(
+    spacing: 6,
+    children: [
+      for (final language in ['en', 'bn'])
+        Semantics(
+          key: Key('language-$language'),
+          button: true,
+          enabled: !controller.dataLocked,
+          onTap: controller.dataLocked
+              ? null
+              : () => controller.setLanguage(language),
+          selected: controller.settings.language == language,
+          label: context.tr('language_$language'),
+          excludeSemantics: true,
+          child: OutlinedButton(
+            onPressed: controller.dataLocked
+                ? null
+                : () => controller.setLanguage(language),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(48, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: const StadiumBorder(),
+              foregroundColor: controller.settings.language == language
+                  ? TasbihTheme.gold
+                  : TasbihTheme.muted,
+              backgroundColor: controller.settings.language == language
+                  ? TasbihTheme.gold.withValues(alpha: .14)
+                  : TasbihTheme.soft,
+              side: BorderSide(
+                color: controller.settings.language == language
+                    ? TasbihTheme.gold
+                    : TasbihTheme.border,
+              ),
+              textStyle: TextStyle(
+                fontFamily: context.l10n.fontFamily,
+                fontFamilyFallback: TasbihTheme.fallbackFonts,
+                fontSize: 12,
+              ),
+            ),
+            child: Text(context.tr('badge_$language')),
+          ),
+        ),
+    ],
   );
 }

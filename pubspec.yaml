@@ -1,56 +1,65 @@
 name: tashbihh
 description: Offline native Tasbih Counter with prayer-focused progress and streaks.
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 environment:
-  sdk: ^3.13.7
+    sdk: ^3.13.7
 dependencies:
-  flutter:
-    sdk: flutter
-  shared_preferences: 2.5.6
-  vibration: 3.2.1
-  window_manager: 0.5.1
-  web: 1.1.2
-  geolocator_android: 5.2.1
-  http: 1.6.0
-  timezone: 0.11.2
-  google_sign_in: ^7.2.0
-  crypto: ^3.0.8
+    flutter:
+        sdk: flutter
+    flutter_localizations:
+        sdk: flutter
+    shared_preferences: 2.5.6
+    vibration: 3.2.1
+    window_manager: 0.5.1
+    web: 1.1.2
+    geolocator_android: 5.2.1
+    http: 1.6.0
+    timezone: 0.11.2
+    google_sign_in: ^7.2.0
+    crypto: ^3.0.8
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  integration_test:
-    sdk: flutter
-  flutter_lints: 6.0.0
+    flutter_test:
+        sdk: flutter
+    integration_test:
+        sdk: flutter
+    flutter_lints: 6.0.0
 flutter:
-  uses-material-design: true
-  assets:
-    - assets/data/config.json
-    - assets/branding/
-    - assets/fonts/amiri-OFL.txt
-    - assets/fonts/ibmplexsansarabic-OFL.txt
-    - assets/fonts/emoji-LICENSE.txt
-    - assets/fonts/symbols-LICENSE.txt
-    - assets/fonts/roboto-OFL.txt
-  fonts:
-    - family: Amiri
-      fonts:
-        - asset: assets/fonts/Amiri-Regular.ttf
-        - asset: assets/fonts/Amiri-Bold.ttf
-          weight: 700
-    - family: IBM Plex Sans Arabic
-      fonts:
-        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
-        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
-          weight: 600
-    - family: Tasbih Emoji
-      fonts:
-        - asset: assets/fonts/TasbihEmoji.ttf
-    - family: Tasbih Symbols
-      fonts:
-        - asset: assets/fonts/TasbihSymbols.ttf
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/Roboto.ttf
+    uses-material-design: true
+    assets:
+        - assets/data/config.json
+        - assets/localization/translations.json
+        - assets/branding/
+        - assets/fonts/amiri-OFL.txt
+        - assets/fonts/ibmplexsansarabic-OFL.txt
+        - assets/fonts/emoji-LICENSE.txt
+        - assets/fonts/symbols-LICENSE.txt
+        - assets/fonts/roboto-OFL.txt
+    fonts:
+        - family: Comfortaa
+          fonts:
+              - asset: assets/fonts/Comfortaa.ttf
+        - family: KohinoorBangla
+          fonts:
+              - asset: assets/fonts/KohinoorBangla.ttf
+        - family: Amiri
+          fonts:
+              - asset: assets/fonts/Amiri-Regular.ttf
+              - asset: assets/fonts/Amiri-Bold.ttf
+                weight: 700
+        - family: IBM Plex Sans Arabic
+          fonts:
+              - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+              - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+                weight: 500
+              - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+                weight: 600
+        - family: Tasbih Emoji
+          fonts:
+              - asset: assets/fonts/TasbihEmoji.ttf
+        - family: Tasbih Symbols
+          fonts:
+              - asset: assets/fonts/TasbihSymbols.ttf
+        - family: Roboto
+          fonts:
+              - asset: assets/fonts/Roboto.ttf

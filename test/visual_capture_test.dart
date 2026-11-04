@@ -14,6 +14,8 @@ void main() {
     tester,
   ) async {
     for (final entry in {
+      'Comfortaa': ['Comfortaa.ttf'],
+      'KohinoorBangla': ['KohinoorBangla.ttf'],
       'Amiri': ['Amiri-Regular.ttf', 'Amiri-Bold.ttf'],
       'Tasbih Emoji': ['TasbihEmoji.ttf'],
       'Tasbih Symbols': ['TasbihSymbols.ttf'],

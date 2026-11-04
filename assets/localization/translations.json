@@ -1,0 +1,826 @@
+{
+  "app_name": {
+    "en": "Tashbihh",
+    "bn": "তাসবিহ"
+  },
+  "app_title": {
+    "en": "Tasbih Counter",
+    "bn": "তাসবিহ কাউন্টার"
+  },
+  "app_heading": {
+    "en": "TASBIH COUNTER",
+    "bn": "তাসবিহ কাউন্টার"
+  },
+  "settings": {
+    "en": "Settings",
+    "bn": "সেটিংস"
+  },
+  "settings_heading": {
+    "en": "SETTINGS",
+    "bn": "সেটিংস"
+  },
+  "language": {
+    "en": "Language",
+    "bn": "ভাষা"
+  },
+  "language_en": {
+    "en": "English",
+    "bn": "ইংরেজি"
+  },
+  "language_bn": {
+    "en": "Bangla",
+    "bn": "বাংলা"
+  },
+  "badge_en": {
+    "en": "EN",
+    "bn": "EN"
+  },
+  "badge_bn": {
+    "en": "বাং",
+    "bn": "বাং"
+  },
+  "vibration": {
+    "en": "Vibration Intensity: {value}ms",
+    "bn": "কম্পনের মাত্রা: {value} মিলিসেকেন্ড"
+  },
+  "milliseconds": {
+    "en": "{value}ms",
+    "bn": "{value} মিলিসেকেন্ড"
+  },
+  "app_mode": {
+    "en": "App mode",
+    "bn": "অ্যাপের মোড"
+  },
+  "prayer_mode": {
+    "en": "Prayer Mode",
+    "bn": "নামাজের মোড"
+  },
+  "custom_mode": {
+    "en": "Custom Mode",
+    "bn": "নিজস্ব মোড"
+  },
+  "custom_target": {
+    "en": "Custom target: {target}",
+    "bn": "নিজস্ব লক্ষ্য: {target}"
+  },
+  "counter_style": {
+    "en": "Counter style",
+    "bn": "কাউন্টারের ধরন"
+  },
+  "modern": {
+    "en": "Modern",
+    "bn": "আধুনিক"
+  },
+  "classic": {
+    "en": "Classic",
+    "bn": "ক্লাসিক"
+  },
+  "screen": {
+    "en": "Screen",
+    "bn": "স্ক্রিন"
+  },
+  "exit_fullscreen": {
+    "en": "Exit Full Screen",
+    "bn": "পূর্ণ পর্দা বন্ধ করুন"
+  },
+  "fullscreen": {
+    "en": "Full Screen",
+    "bn": "পূর্ণ পর্দা"
+  },
+  "prayer_notifications": {
+    "en": "Prayer Notifications",
+    "bn": "নামাজের বিজ্ঞপ্তি"
+  },
+  "backup_restore_heading": {
+    "en": "Backup & Restore",
+    "bn": "ব্যাকআপ ও পুনরুদ্ধার"
+  },
+  "backup_restore": {
+    "en": "Backup/Restore",
+    "bn": "ব্যাকআপ/পুনরুদ্ধার"
+  },
+  "connect_drive": {
+    "en": "Connect Google Drive to back up or restore progress.",
+    "bn": "অগ্রগতি ব্যাকআপ বা পুনরুদ্ধার করতে Google Drive যুক্ত করুন।"
+  },
+  "reset_all": {
+    "en": "Reset all data",
+    "bn": "সব তথ্য রিসেট করুন"
+  },
+  "android_only": {
+    "en": "Available in the Android app.",
+    "bn": "অ্যান্ড্রয়েড অ্যাপে পাওয়া যাবে।"
+  },
+  "android_notification_settings": {
+    "en": "Android notification settings",
+    "bn": "অ্যান্ড্রয়েড বিজ্ঞপ্তির সেটিংস"
+  },
+  "precise_reminders": {
+    "en": "Allow precise reminders (optional)",
+    "bn": "নির্দিষ্ট সময়ে বিজ্ঞপ্তি দিন (ঐচ্ছিক)"
+  },
+  "local_prayer_times": {
+    "en": "Local prayer times",
+    "bn": "স্থানীয় নামাজের সময়"
+  },
+  "location_explanation": {
+    "en": "Tasbih uses your location while the app is open to get today’s prayer times from AlAdhan. Only the coordinates used for the latest schedule are saved. Your location is never tracked in the background. You can continue with configured prayer times without granting access.",
+    "bn": "আজকের নামাজের সময় AlAdhan থেকে পেতে অ্যাপ খোলা থাকাকালে তাসবিহ আপনার অবস্থান ব্যবহার করে। শুধু সর্বশেষ সময়সূচির জন্য ব্যবহৃত স্থানাঙ্ক সংরক্ষিত হয়। ব্যাকগ্রাউন্ডে আপনার অবস্থান অনুসরণ করা হয় না। অনুমতি না দিয়েও নির্ধারিত সময়সূচি ব্যবহার করতে পারবেন।"
+  },
+  "configured_times_action": {
+    "en": "Use configured times",
+    "bn": "নির্ধারিত সময় ব্যবহার করুন"
+  },
+  "continue": {
+    "en": "Continue",
+    "bn": "চালিয়ে যান"
+  },
+  "drive_android_only": {
+    "en": "Google Drive backup is available in the Android app.",
+    "bn": "Google Drive ব্যাকআপ অ্যান্ড্রয়েড অ্যাপে পাওয়া যাবে।"
+  },
+  "drive_backup": {
+    "en": "Google Drive backup",
+    "bn": "Google Drive ব্যাকআপ"
+  },
+  "close": {
+    "en": "Close",
+    "bn": "বন্ধ করুন"
+  },
+  "switch_account": {
+    "en": "Switch Google account",
+    "bn": "Google অ্যাকাউন্ট বদলান"
+  },
+  "dismiss_reset": {
+    "en": "Dismiss reset confirmation",
+    "bn": "রিসেট নিশ্চিতকরণ বন্ধ করুন"
+  },
+  "reset_question": {
+    "en": "Reset all data?",
+    "bn": "সব তথ্য রিসেট করবেন?"
+  },
+  "reset_cloud_explanation": {
+    "en": "Are you sure you want to reset everything? This will permanently delete your local counter progress and your Google Drive backup for the connected account. This action cannot be undone.",
+    "bn": "আপনি কি সবকিছু রিসেট করতে চান? এতে এই ডিভাইসের কাউন্টারের অগ্রগতি এবং যুক্ত অ্যাকাউন্টের Google Drive ব্যাকআপ স্থায়ীভাবে মুছে যাবে। এটি আর ফিরিয়ে আনা যাবে না।"
+  },
+  "reset_local_explanation": {
+    "en": "Are you sure you want to reset everything? This will permanently delete your local counter progress and settings. This action cannot be undone.",
+    "bn": "আপনি কি সবকিছু রিসেট করতে চান? এতে এই ডিভাইসের কাউন্টারের অগ্রগতি ও সেটিংস স্থায়ীভাবে মুছে যাবে। এটি আর ফিরিয়ে আনা যাবে না।"
+  },
+  "cancel": {
+    "en": "Cancel",
+    "bn": "বাতিল"
+  },
+  "reset_everything": {
+    "en": "Reset Everything",
+    "bn": "সবকিছু রিসেট করুন"
+  },
+  "resetting": {
+    "en": "Resetting data…",
+    "bn": "তথ্য রিসেট হচ্ছে…"
+  },
+  "reset_done": {
+    "en": "Everything reset.",
+    "bn": "সবকিছু রিসেট হয়েছে।"
+  },
+  "reset_failed": {
+    "en": "Reset failed. Please retry.",
+    "bn": "রিসেট করা যায়নি। আবার চেষ্টা করুন।"
+  },
+  "streak": {
+    "en": "Streak: {days} days",
+    "bn": "ধারাবাহিকতা: {days} দিন"
+  },
+  "available": {
+    "en": "Available now",
+    "bn": "এখন গণনা করা যাবে"
+  },
+  "unavailable": {
+    "en": "Not available at this time",
+    "bn": "এখন গণনা করা যাবে না"
+  },
+  "active_prayer": {
+    "en": "{prayer} · Available now",
+    "bn": "{prayer} · এখন গণনা করা যাবে"
+  },
+  "locked": {
+    "en": "Locked",
+    "bn": "লক করা"
+  },
+  "open_settings": {
+    "en": "Open settings",
+    "bn": "সেটিংস খুলুন"
+  },
+  "counter_semantics": {
+    "en": "Tasbih counter",
+    "bn": "তাসবিহ কাউন্টার"
+  },
+  "reset_counter": {
+    "en": "Reset counter",
+    "bn": "কাউন্টার রিসেট করুন"
+  },
+  "counter_value": {
+    "en": "{count} of {target}",
+    "bn": "{target} এর মধ্যে {count}"
+  },
+  "select_dua": {
+    "en": "Select a Dua",
+    "bn": "একটি দোয়া বেছে নিন"
+  },
+  "completed": {
+    "en": "Completed",
+    "bn": "সম্পন্ন"
+  },
+  "incomplete": {
+    "en": "Incomplete",
+    "bn": "অসম্পূর্ণ"
+  },
+  "dua_target": {
+    "en": "Target: {target}x",
+    "bn": "লক্ষ্য: {target} বার"
+  },
+  "dua_selected": {
+    "en": "{name} · {target}x",
+    "bn": "{name} · {target} বার"
+  },
+  "dua_description": {
+    "en": "{name} - {meaning}",
+    "bn": "{name} - {meaning}"
+  },
+  "quoted_meaning": {
+    "en": "\"{meaning}\"",
+    "bn": "“{meaning}”"
+  },
+  "prayer_tooltip": {
+    "en": "{prayer} · {arabic}\n{window} · {status}{locked}",
+    "bn": "{prayer} · {arabic}\n{window} · {status}{locked}"
+  },
+  "prayer_semantics": {
+    "en": "{prayer}, {arabic}, {window}, {status}{locked}",
+    "bn": "{prayer}, {arabic}, {window}, {status}{locked}"
+  },
+  "lock_suffix": {
+    "en": " · Locked",
+    "bn": " · লক করা"
+  },
+  "lock_semantics_suffix": {
+    "en": ", locked",
+    "bn": ", লক করা"
+  },
+  "hint_custom_done": {
+    "en": "Target completed. Double tap to reset.",
+    "bn": "লক্ষ্য পূর্ণ হয়েছে। রিসেট করতে দুবার ট্যাপ করুন।"
+  },
+  "hint_done": {
+    "en": "Target completed",
+    "bn": "লক্ষ্য পূর্ণ হয়েছে"
+  },
+  "hint_custom": {
+    "en": "Tap to count. Double tap to reset.",
+    "bn": "গণনা করতে ট্যাপ করুন। রিসেট করতে দুবার ট্যাপ করুন।"
+  },
+  "hint_unavailable": {
+    "en": "Not available at this time · {window}",
+    "bn": "এখন গণনা করা যাবে না · {window}"
+  },
+  "hint_available": {
+    "en": "Available now. Tap to count. Double tap to reset incomplete progress.",
+    "bn": "এখন গণনা করা যাবে। গণনা করতে ট্যাপ করুন। অসম্পূর্ণ অগ্রগতি রিসেট করতে দুবার ট্যাপ করুন।"
+  },
+  "progress_save_failed": {
+    "en": "Progress could not be saved. Please free device storage.",
+    "bn": "অগ্রগতি সংরক্ষণ করা যায়নি। ডিভাইসে জায়গা খালি করুন।"
+  },
+  "off": {
+    "en": "Off",
+    "bn": "বন্ধ"
+  },
+  "notifications_blocked": {
+    "en": "Blocked in Android notification settings",
+    "bn": "অ্যান্ড্রয়েড সেটিংসে বিজ্ঞপ্তি বন্ধ আছে"
+  },
+  "notifications_precise": {
+    "en": "On · precise alarms allowed",
+    "bn": "চালু · নির্দিষ্ট সময়ে বিজ্ঞপ্তির অনুমতি আছে"
+  },
+  "notifications_delayed": {
+    "en": "On · Android may delay reminders",
+    "bn": "চালু · অ্যান্ড্রয়েড বিজ্ঞপ্তি দিতে দেরি করতে পারে"
+  },
+  "notification_settings_failed": {
+    "en": "Notification settings unavailable. Please retry.",
+    "bn": "বিজ্ঞপ্তির সেটিংস পাওয়া যাচ্ছে না। আবার চেষ্টা করুন।"
+  },
+  "using_configured": {
+    "en": "Using configured prayer times.",
+    "bn": "নির্ধারিত নামাজের সময় ব্যবহার করা হচ্ছে।"
+  },
+  "using_saved": {
+    "en": "Using saved prayer times from {date}.",
+    "bn": "{date} তারিখের সংরক্ষিত নামাজের সময় ব্যবহার করা হচ্ছে।"
+  },
+  "location_enable": {
+    "en": "Turn on device Location in Android Settings to get local prayer times.",
+    "bn": "স্থানীয় নামাজের সময় পেতে অ্যান্ড্রয়েড সেটিংসে অবস্থান চালু করুন।"
+  },
+  "location_permission": {
+    "en": "To enable location, open Android Settings → Apps → Tasbih Counter → Permissions → Location and allow access while using the app.",
+    "bn": "অবস্থান চালু করতে অ্যান্ড্রয়েড সেটিংস → অ্যাপ → Tasbih Counter → অনুমতি → অবস্থান খুলে অ্যাপ ব্যবহারের সময় অনুমতি দিন।"
+  },
+  "prayer_fallback_error": {
+    "en": "{fallback} {reason}",
+    "bn": "{fallback} {reason}"
+  },
+  "prayer_sync_error": {
+    "en": "Local prayer times are unavailable. {fallback} Automatic synchronization will retry later.",
+    "bn": "স্থানীয় নামাজের সময় পাওয়া যাচ্ছে না। {fallback} স্বয়ংক্রিয় সমন্বয় পরে আবার চেষ্টা করবে।"
+  },
+  "prayer_fajr": {
+    "en": "Fajr",
+    "bn": "ফজর"
+  },
+  "prayer_dhuhr": {
+    "en": "Dhuhr",
+    "bn": "যোহর"
+  },
+  "prayer_asr": {
+    "en": "Asr",
+    "bn": "আসর"
+  },
+  "prayer_maghrib": {
+    "en": "Maghrib",
+    "bn": "মাগরিব"
+  },
+  "prayer_isha": {
+    "en": "Isha",
+    "bn": "এশা"
+  },
+  "dhikr_subhanallah": {
+    "en": "SubhanAllah",
+    "bn": "সুবহানাল্লাহ"
+  },
+  "meaning_subhanallah": {
+    "en": "Glory be to Allah",
+    "bn": "আল্লাহ পবিত্র ও মহিমান্বিত"
+  },
+  "arabic_subhanallah": {
+    "en": "سُبْحَانَ اللَّهِ",
+    "bn": "سُبْحَانَ اللَّهِ"
+  },
+  "dhikr_alhamdulillah": {
+    "en": "Alhamdulillah",
+    "bn": "আলহামদুলিল্লাহ"
+  },
+  "meaning_alhamdulillah": {
+    "en": "All praise is due to Allah",
+    "bn": "সব প্রশংসা আল্লাহর জন্য"
+  },
+  "arabic_alhamdulillah": {
+    "en": "الْحَمْدُ لِلَّهِ",
+    "bn": "الْحَمْدُ لِلَّهِ"
+  },
+  "dhikr_allahuakbar": {
+    "en": "Allahu Akbar",
+    "bn": "আল্লাহু আকবার"
+  },
+  "meaning_allahuakbar": {
+    "en": "Allah is the Greatest",
+    "bn": "আল্লাহ সর্বশ্রেষ্ঠ"
+  },
+  "arabic_allahuakbar": {
+    "en": "اللَّهُ أَكْبَرُ",
+    "bn": "اللَّهُ أَكْبَرُ"
+  },
+  "dhikr_lailahaillallah": {
+    "en": "La ilaha illallah",
+    "bn": "লা ইলাহা ইল্লাল্লাহ"
+  },
+  "meaning_lailahaillallah": {
+    "en": "There is no god but Allah",
+    "bn": "আল্লাহ ছাড়া কোনো উপাস্য নেই"
+  },
+  "arabic_lailahaillallah": {
+    "en": "لَا إِلَهَ إِلَّا اللَّهُ",
+    "bn": "لَا إِلَهَ إِلَّا اللَّهُ"
+  },
+  "dhikr_astaghfirullah": {
+    "en": "Astaghfirullah",
+    "bn": "আস্তাগফিরুল্লাহ"
+  },
+  "meaning_astaghfirullah": {
+    "en": "I seek forgiveness from Allah",
+    "bn": "আমি আল্লাহর কাছে ক্ষমা চাই"
+  },
+  "arabic_astaghfirullah": {
+    "en": "أَسْتَغْفِرُ اللَّهَ",
+    "bn": "أَسْتَغْفِرُ اللَّهَ"
+  },
+  "dhikr_lahawla": {
+    "en": "La hawla wa la quwwata illa billah",
+    "bn": "লা হাওলা ওয়ালা কুওয়াতা ইল্লা বিল্লাহ"
+  },
+  "meaning_lahawla": {
+    "en": "There is no power nor strength except with Allah",
+    "bn": "আল্লাহ ছাড়া কোনো শক্তি ও সামর্থ্য নেই"
+  },
+  "arabic_lahawla": {
+    "en": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    "bn": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ"
+  },
+  "dhikr_ayatulkursi": {
+    "en": "Ayatul Kursi",
+    "bn": "আয়াতুল কুরসি"
+  },
+  "meaning_ayatulkursi": {
+    "en": "The Throne Verse (recite once)",
+    "bn": "আরশের আয়াত (একবার পড়ুন)"
+  },
+  "arabic_ayatulkursi": {
+    "en": "آية الكرسي",
+    "bn": "آية الكرسي"
+  },
+  "dhikr_sayyidulistighfar": {
+    "en": "Sayyidul Istighfar",
+    "bn": "সাইয়্যিদুল ইস্তিগফার"
+  },
+  "meaning_sayyidulistighfar": {
+    "en": "Master supplication for forgiveness",
+    "bn": "ক্ষমা প্রার্থনার শ্রেষ্ঠ দোয়া"
+  },
+  "arabic_sayyidulistighfar": {
+    "en": "سيد الاستغفار",
+    "bn": "سيد الاستغفار"
+  },
+  "dhikr_durood": {
+    "en": "Allahumma salli ala Muhammad",
+    "bn": "আল্লাহুম্মা সাল্লি আলা মুহাম্মাদ"
+  },
+  "meaning_durood": {
+    "en": "Send blessings upon Muhammad ﷺ",
+    "bn": "মুহাম্মাদ ﷺ-এর প্রতি দরুদ পাঠ করুন"
+  },
+  "arabic_durood": {
+    "en": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ",
+    "bn": "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ"
+  },
+  "dhikr_subhanallahi_wabihamdihi": {
+    "en": "SubhanAllahi wa bihamdihi",
+    "bn": "সুবহানাল্লাহি ওয়া বিহামদিহি"
+  },
+  "meaning_subhanallahi_wabihamdihi": {
+    "en": "Glory and praise be to Allah",
+    "bn": "আল্লাহ পবিত্র, সকল প্রশংসা তাঁর"
+  },
+  "arabic_subhanallahi_wabihamdihi": {
+    "en": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    "bn": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ"
+  },
+  "dhikr_allahumma_inni_asalukal_afiyah": {
+    "en": "Allah Humma Inni As'alukal Afiyah",
+    "bn": "আল্লাহুম্মা ইন্নি আসআলুকাল আফিয়াহ"
+  },
+  "meaning_allahumma_inni_asalukal_afiyah": {
+    "en": "O Allah, I ask You for well-being",
+    "bn": "হে আল্লাহ, আমি আপনার কাছে সুস্থতা ও নিরাপত্তা চাই"
+  },
+  "arabic_allahumma_inni_asalukal_afiyah": {
+    "en": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ",
+    "bn": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ"
+  },
+  "bismillah": {
+    "en": "بِسْمِ اللَّهِ",
+    "bn": "بِسْمِ اللَّهِ"
+  },
+  "cloud_busy": {
+    "en": "Another cloud operation is in progress. Please retry.",
+    "bn": "আরেকটি ক্লাউড কাজ চলছে। আবার চেষ্টা করুন।"
+  },
+  "cloud_failed": {
+    "en": "Cloud operation failed. Local progress remains active. Check your connection and free device storage before retrying.",
+    "bn": "ক্লাউডের কাজ সম্পন্ন হয়নি। স্থানীয় অগ্রগতি অক্ষত আছে। সংযোগ পরীক্ষা করে ডিভাইসে জায়গা খালি করুন, তারপর আবার চেষ্টা করুন।"
+  },
+  "backup_too_large_local": {
+    "en": "Backup is too large. Local progress was kept.",
+    "bn": "ব্যাকআপের আকার খুব বড়। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "finish_reset": {
+    "en": "Finish Reset Everything before connecting an account.",
+    "bn": "অ্যাকাউন্ট যুক্ত করার আগে সবকিছু রিসেট করার কাজ শেষ করুন।"
+  },
+  "choose_account": {
+    "en": "Choose a Google account and allow private Drive backup access.",
+    "bn": "একটি Google অ্যাকাউন্ট বেছে নিয়ে ব্যক্তিগত Drive ব্যাকআপের অনুমতি দিন।"
+  },
+  "checking_account": {
+    "en": "Checking {email} for a cloud backup…",
+    "bn": "{email} অ্যাকাউন্টে ক্লাউড ব্যাকআপ খোঁজা হচ্ছে…"
+  },
+  "restoring_cloud": {
+    "en": "Restoring cloud data…",
+    "bn": "ক্লাউডের তথ্য পুনরুদ্ধার হচ্ছে…"
+  },
+  "restore_connected": {
+    "en": "Restore successful. Connected to {email}.",
+    "bn": "পুনরুদ্ধার সফল। {email} যুক্ত হয়েছে।"
+  },
+  "creating_backup": {
+    "en": "Creating first cloud backup…",
+    "bn": "প্রথম ক্লাউড ব্যাকআপ তৈরি হচ্ছে…"
+  },
+  "backup_connected": {
+    "en": "Backup successful. Connected to {email}.",
+    "bn": "ব্যাকআপ সফল। {email} যুক্ত হয়েছে।"
+  },
+  "connect_first": {
+    "en": "Connect Backup/Restore first, or finish the pending reset.",
+    "bn": "আগে ব্যাকআপ/পুনরুদ্ধার যুক্ত করুন অথবা অসমাপ্ত রিসেট শেষ করুন।"
+  },
+  "backing_up": {
+    "en": "Backing up current progress…",
+    "bn": "বর্তমান অগ্রগতির ব্যাকআপ হচ্ছে…"
+  },
+  "backup_success": {
+    "en": "Backup successful.",
+    "bn": "ব্যাকআপ সফল হয়েছে।"
+  },
+  "account_changed": {
+    "en": "Account changed. Use Switch Google account before syncing.",
+    "bn": "অ্যাকাউন্ট বদলেছে। সমন্বয়ের আগে Google অ্যাকাউন্ট বদলান বোতাম ব্যবহার করুন।"
+  },
+  "deleting_backup": {
+    "en": "Deleting the connected account’s Google Drive backup…",
+    "bn": "যুক্ত অ্যাকাউন্টের Google Drive ব্যাকআপ মুছে ফেলা হচ্ছে…"
+  },
+  "reset_disconnected": {
+    "en": "Everything reset. Connect Backup/Restore to set up backups again.",
+    "bn": "সবকিছু রিসেট হয়েছে। আবার ব্যাকআপ চালু করতে ব্যাকআপ/পুনরুদ্ধার যুক্ত করুন।"
+  },
+  "reset_interrupted": {
+    "en": "Reset was interrupted. Retry Reset Everything to finish safely.",
+    "bn": "রিসেট বাধাগ্রস্ত হয়েছে। নিরাপদে শেষ করতে সবকিছু রিসেট করুন বোতামে আবার চাপুন।"
+  },
+  "restore_running": {
+    "en": "A restore is already running.",
+    "bn": "ইতিমধ্যে পুনরুদ্ধার চলছে।"
+  },
+  "backup_future": {
+    "en": "Backup progress is dated in the future. Check the device date before restoring.",
+    "bn": "ব্যাকআপের অগ্রগতিতে ভবিষ্যতের তারিখ রয়েছে। পুনরুদ্ধারের আগে ডিভাইসের তারিখ পরীক্ষা করুন।"
+  },
+  "restore_storage_failed": {
+    "en": "Restore failed and storage recovery could not be verified. Your active data is unchanged. Free storage and restart before trying again.",
+    "bn": "পুনরুদ্ধার ব্যর্থ হয়েছে এবং সংরক্ষণস্থল পুনরুদ্ধার যাচাই করা যায়নি। আপনার সক্রিয় তথ্য অপরিবর্তিত আছে। জায়গা খালি করে অ্যাপ আবার চালু করুন।"
+  },
+  "save_failed": {
+    "en": "Could not save progress",
+    "bn": "অগ্রগতি সংরক্ষণ করা যায়নি"
+  },
+  "backup_corrupt": {
+    "en": "Cloud backup is corrupted or incompatible. Local progress was kept.",
+    "bn": "ক্লাউড ব্যাকআপ নষ্ট বা অসামঞ্জস্যপূর্ণ। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "backup_max_size": {
+    "en": "Backup is too large. Maximum size is 1 MB.",
+    "bn": "ব্যাকআপের আকার খুব বড়। সর্বোচ্চ আকার ১ মেগাবাইট।"
+  },
+  "backup_wrong_format": {
+    "en": "This is not a Tasbih backup.",
+    "bn": "এটি তাসবিহ ব্যাকআপ নয়।"
+  },
+  "backup_version": {
+    "en": "Unsupported backup version. Use an app that supports this backup.",
+    "bn": "এই ব্যাকআপ সংস্করণ সমর্থিত নয়। এটি সমর্থন করে এমন অ্যাপ ব্যবহার করুন।"
+  },
+  "backup_timezone": {
+    "en": "Backup timestamp must include a timezone.",
+    "bn": "ব্যাকআপের সময়ে সময় অঞ্চল থাকতে হবে।"
+  },
+  "backup_timestamp": {
+    "en": "Invalid backup timestamp.",
+    "bn": "ব্যাকআপের সময় অবৈধ।"
+  },
+  "backup_offset": {
+    "en": "Invalid timestamp offset.",
+    "bn": "সময় অঞ্চলের ব্যবধান অবৈধ।"
+  },
+  "backup_app_version": {
+    "en": "Missing app version.",
+    "bn": "অ্যাপের সংস্করণ অনুপস্থিত।"
+  },
+  "backup_prayer": {
+    "en": "Invalid selected prayer.",
+    "bn": "নির্বাচিত নামাজ অবৈধ।"
+  },
+  "backup_vibration": {
+    "en": "Invalid vibration intensity.",
+    "bn": "কম্পনের মাত্রা অবৈধ।"
+  },
+  "backup_mode": {
+    "en": "Invalid app mode.",
+    "bn": "অ্যাপের মোড অবৈধ।"
+  },
+  "backup_style": {
+    "en": "Invalid counter style.",
+    "bn": "কাউন্টারের ধরন অবৈধ।"
+  },
+  "backup_json": {
+    "en": "Invalid backup JSON or missing required fields.",
+    "bn": "ব্যাকআপ JSON অবৈধ অথবা প্রয়োজনীয় তথ্য নেই।"
+  },
+  "backup_streak_metadata": {
+    "en": "Missing streak metadata.",
+    "bn": "ধারাবাহিকতার তথ্য অনুপস্থিত।"
+  },
+  "backup_streak_date": {
+    "en": "Streak date cannot follow progress date.",
+    "bn": "ধারাবাহিকতার তারিখ অগ্রগতির তারিখের পরে হতে পারে না।"
+  },
+  "backup_success_date": {
+    "en": "Missing successful streak date.",
+    "bn": "সফল ধারাবাহিকতার তারিখ অনুপস্থিত।"
+  },
+  "backup_configuration": {
+    "en": "Prayer configuration is incompatible.",
+    "bn": "নামাজের কনফিগারেশন অসামঞ্জস্যপূর্ণ।"
+  },
+  "backup_dhikr": {
+    "en": "Invalid selected Dhikr.",
+    "bn": "নির্বাচিত জিকির অবৈধ।"
+  },
+  "backup_unknown_dhikr": {
+    "en": "Unknown Dhikr in backup.",
+    "bn": "ব্যাকআপে অজানা জিকির রয়েছে।"
+  },
+  "backup_completion": {
+    "en": "Invalid completion list.",
+    "bn": "সম্পন্ন তালিকা অবৈধ।"
+  },
+  "backup_duplicates": {
+    "en": "Duplicate completion entries.",
+    "bn": "সম্পন্ন তালিকায় একই তথ্য একাধিকবার রয়েছে।"
+  },
+  "backup_count_mismatch": {
+    "en": "Completion does not match count.",
+    "bn": "সম্পন্ন অবস্থা গণনার সঙ্গে মেলে না।"
+  },
+  "backup_incomplete_metadata": {
+    "en": "Incomplete completion metadata.",
+    "bn": "সম্পন্ন অবস্থার তথ্য অসম্পূর্ণ।"
+  },
+  "backup_day_evaluation": {
+    "en": "Completed day is missing its streak evaluation.",
+    "bn": "সম্পন্ন দিনের ধারাবাহিকতার মূল্যায়ন নেই।"
+  },
+  "backup_object": {
+    "en": "Missing required backup object.",
+    "bn": "ব্যাকআপের প্রয়োজনীয় অংশ অনুপস্থিত।"
+  },
+  "backup_number": {
+    "en": "Invalid counter or numeric setting.",
+    "bn": "কাউন্টার বা সংখ্যার সেটিং অবৈধ।"
+  },
+  "backup_date": {
+    "en": "Invalid progress date.",
+    "bn": "অগ্রগতির তারিখ অবৈধ।"
+  },
+  "backup_calendar": {
+    "en": "Invalid calendar date.",
+    "bn": "ক্যালেন্ডারের তারিখ অবৈধ।"
+  },
+  "auth_expired": {
+    "en": "Google authorization expired. Tap Backup/Restore to authorize again.",
+    "bn": "Google-এর অনুমোদনের মেয়াদ শেষ। আবার অনুমতি দিতে ব্যাকআপ/পুনরুদ্ধারে চাপুন।"
+  },
+  "auth_canceled": {
+    "en": "Google account selection or permission was cancelled. Local progress was kept.",
+    "bn": "Google অ্যাকাউন্ট নির্বাচন বা অনুমতি বাতিল হয়েছে। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "auth_configuration": {
+    "en": "Google Sign-In configuration error. Check the Android signing certificate and OAuth client.",
+    "bn": "Google সাইন-ইনের কনফিগারেশনে ত্রুটি। অ্যান্ড্রয়েড সাইনিং সার্টিফিকেট ও OAuth ক্লায়েন্ট পরীক্ষা করুন।"
+  },
+  "auth_failed": {
+    "en": "Google authentication or permission failed. Check your connection and try Backup/Restore again.",
+    "bn": "Google পরিচয় যাচাই বা অনুমতি ব্যর্থ হয়েছে। সংযোগ পরীক্ষা করে ব্যাকআপ/পুনরুদ্ধারে আবার চেষ্টা করুন।"
+  },
+  "auth_account": {
+    "en": "Authenticate the connected Google account to continue. Use Switch Google account to change accounts.",
+    "bn": "চালিয়ে যেতে যুক্ত Google অ্যাকাউন্টে পরিচয় যাচাই করুন। অ্যাকাউন্ট পরিবর্তন করতে Google অ্যাকাউন্ট বদলান ব্যবহার করুন।"
+  },
+  "cloud_large": {
+    "en": "Cloud backup is too large. Local progress was kept.",
+    "bn": "ক্লাউড ব্যাকআপের আকার খুব বড়। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "drive_denied": {
+    "en": "Google Drive permission denied or quota exceeded. Allow private app-data access and retry.",
+    "bn": "Google Drive-এর অনুমতি নেই অথবা সীমা শেষ। ব্যক্তিগত অ্যাপের তথ্য ব্যবহারের অনুমতি দিয়ে আবার চেষ্টা করুন।"
+  },
+  "drive_http": {
+    "en": "Google Drive operation failed ({code}). Please retry.",
+    "bn": "Google Drive-এর কাজ ব্যর্থ হয়েছে ({code})। আবার চেষ্টা করুন।"
+  },
+  "network_timeout": {
+    "en": "Network unavailable or timed out. Check your connection and retry.",
+    "bn": "নেটওয়ার্ক নেই অথবা সময় শেষ। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+  },
+  "network_unavailable": {
+    "en": "Network unavailable. Check your internet connection and retry.",
+    "bn": "নেটওয়ার্ক নেই। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।"
+  },
+  "drive_search": {
+    "en": "Drive search was incomplete. Retry before creating or deleting a backup.",
+    "bn": "Drive-এ খোঁজা অসম্পূর্ণ ছিল। ব্যাকআপ তৈরি বা মুছে ফেলার আগে আবার চেষ্টা করুন।"
+  },
+  "cloud_size_limit": {
+    "en": "Backup exceeds the cloud size limit.",
+    "bn": "ব্যাকআপ ক্লাউডের আকারসীমা অতিক্রম করেছে।"
+  },
+  "backup_appeared": {
+    "en": "A cloud backup appeared during connection. Retry to restore it safely.",
+    "bn": "সংযোগের সময় একটি ক্লাউড ব্যাকআপ পাওয়া গেছে। নিরাপদে পুনরুদ্ধার করতে আবার চেষ্টা করুন।"
+  },
+  "delete_unverified": {
+    "en": "Cloud deletion could not be verified. Local progress was kept.",
+    "bn": "ক্লাউড থেকে মুছে ফেলা যাচাই করা যায়নি। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "delete_remaining": {
+    "en": "Cloud backup still exists. Retry Reset Everything. Local progress was kept.",
+    "bn": "ক্লাউড ব্যাকআপ এখনো আছে। সবকিছু রিসেট করুন বোতামে আবার চাপুন। স্থানীয় অগ্রগতি অক্ষত আছে।"
+  },
+  "notification_channel": {
+    "en": "Prayer goals and daily summary",
+    "bn": "নামাজের লক্ষ্য ও দৈনিক সারসংক্ষেপ"
+  },
+  "notification_channel_description": {
+    "en": "Gentle tasbih goal reminders and your daily prayer summary",
+    "bn": "তাসবিহের লক্ষ্যের স্মরণবার্তা ও দৈনিক নামাজের সারসংক্ষেপ"
+  },
+  "notification_ending": {
+    "en": "⏰ {prayer} Ending Soon",
+    "bn": "⏰ {prayer}-এর সময় প্রায় শেষ"
+  },
+  "notification_reminder": {
+    "en": "🌿 {prayer} Reminder",
+    "bn": "🌿 {prayer}-এর স্মরণবার্তা"
+  },
+  "invitation_fajr": {
+    "en": "Begin with a peaceful moment of remembrance.",
+    "bn": "প্রশান্ত মনে আল্লাহর স্মরণ দিয়ে দিন শুরু করুন।"
+  },
+  "invitation_dhuhr": {
+    "en": "Take a gentle pause for dhikr.",
+    "bn": "একটু বিরতি নিয়ে জিকির করুন।"
+  },
+  "invitation_asr": {
+    "en": "A few peaceful moments can make a difference.",
+    "bn": "প্রশান্ত কিছু মুহূর্ত দিনকে সুন্দর করে তুলতে পারে।"
+  },
+  "invitation_maghrib": {
+    "en": "Make time for a little remembrance this evening.",
+    "bn": "এই সন্ধ্যায় আল্লাহকে স্মরণ করার কিছু সময় রাখুন।"
+  },
+  "invitation_isha": {
+    "en": "Close this prayer window with a moment of dhikr.",
+    "bn": "এই নামাজের সময় জিকিরের মাধ্যমে শেষ করুন।"
+  },
+  "notification_body": {
+    "en": "{prayer} ends in about {minutes} minutes. You've completed {count} of 3 tasbih goals. {invitation}",
+    "bn": "{prayer}-এর সময় প্রায় {minutes} মিনিট পরে শেষ হবে। তাসবিহের ৩টি লক্ষ্যের মধ্যে {count}টি সম্পন্ন হয়েছে। {invitation}"
+  },
+  "summary_detail": {
+    "en": "{prayer}: {count}/3 — {status}",
+    "bn": "{prayer}: {count}/৩ — {status}"
+  },
+  "summary_all_title": {
+    "en": "✨ Alhamdulillah! All Goals Completed",
+    "bn": "✨ আলহামদুলিল্লাহ! সব লক্ষ্য পূর্ণ হয়েছে"
+  },
+  "summary_all_body": {
+    "en": "You completed your tasbih goal for all 5 prayers on {date}! May Allah bless your consistency. Keep going tomorrow!",
+    "bn": "{date} তারিখে পাঁচ ওয়াক্ত নামাজের সব তাসবিহের লক্ষ্য পূর্ণ করেছেন! আল্লাহ আপনার নিয়মিত আমলে বরকত দিন। আগামীকালও চালিয়ে যান!"
+  },
+  "summary_isha": {
+    "en": "Isha is still available; a peaceful moment can help you reach its goal.",
+    "bn": "এশার সময় এখনো আছে; প্রশান্ত কিছু মুহূর্তে লক্ষ্য পূর্ণ করতে পারেন।"
+  },
+  "summary_encouragement": {
+    "en": "Every effort matters. May tomorrow bring more moments of remembrance.",
+    "bn": "প্রতিটি চেষ্টার মূল্য আছে। আগামীকাল আল্লাহর স্মরণে আরও সময় কাটুক।"
+  },
+  "summary_title": {
+    "en": "🌙 Your Daily Tashbihh Summary",
+    "bn": "🌙 আপনার দৈনিক তাসবিহের সারসংক্ষেপ"
+  },
+  "summary_body": {
+    "en": "For {date}: {complete} of 5 prayers completed; {incomplete} incomplete ({prayers}). {encouragement}",
+    "bn": "{date}: পাঁচ ওয়াক্তের মধ্যে {complete} ওয়াক্তের লক্ষ্য পূর্ণ; {incomplete} ওয়াক্ত অসম্পূর্ণ ({prayers})। {encouragement}"
+  },
+  "prayer_window": {
+    "en": "{start} – {end}",
+    "bn": "{start} – {end}"
+  },
+  "isha_window": {
+    "en": "{start} – next Fajr (saved times if offline)",
+    "bn": "{start} – পরবর্তী ফজর (অফলাইনে সংরক্ষিত সময়)"
+  }
+}

@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations.dart';
+
 import '../../core/backup/cloud_backup_coordinator.dart';
 
 import 'package:flutter/services.dart';
@@ -127,10 +129,11 @@ class _CounterScreenState extends State<CounterScreen>
       _pulse.forward(from: 0);
     }
     _lastCount = c.count;
-    final message = c.prayerTimes?.message;
+    final status = c.prayerTimes?.statusMessage;
+    final message = status?.english;
     if (message != null && message != _lastPrayerMessage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _message(message);
+        if (mounted) _message(status!);
       });
     }
     _lastPrayerMessage = message;
@@ -149,18 +152,16 @@ class _CounterScreenState extends State<CounterScreen>
           context: context,
           builder: (context) => AlertDialog(
             scrollable: true,
-            title: const Text('Local prayer times'),
-            content: const Text(
-              'Tasbih uses your location while the app is open to get today’s prayer times from AlAdhan. Only the coordinates used for the latest schedule are saved. Your location is never tracked in the background. You can continue with configured prayer times without granting access.',
-            ),
+            title: Text(context.tr('local_prayer_times')),
+            content: Text(context.tr('location_explanation')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Use configured times'),
+                child: Text(context.tr('configured_times_action')),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Continue'),
+                child: Text(context.tr('continue')),
               ),
             ],
           ),
@@ -238,13 +239,13 @@ class _CounterScreenState extends State<CounterScreen>
     } catch (_) {
       // The coordinator supplies an actionable error, without token details.
     }
-    if (mounted && cloud?.message != null) _message(cloud!.message!);
+    if (mounted && cloud?.message != null) _message(cloud!.statusMessage!);
   }
 
   Future<void> _backup() async {
     if (_backupBusy || (cloud?.busy ?? false)) return;
     if (cloud == null) {
-      _message('Google Drive backup is available in the Android app.');
+      _message(const AppMessage('drive_android_only'));
       return;
     }
     setState(() => _backupBusy = true);
@@ -258,18 +259,18 @@ class _CounterScreenState extends State<CounterScreen>
         final switching = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Google Drive backup'),
+            title: Text(context.tr('drive_backup')),
             content: Text(
-              '${cloud!.account!.email}\n\n${cloud!.message ?? ""}',
+              '${cloud!.account!.email}\n\n${cloud!.statusMessage == null ? "" : context.l10n.message(cloud!.statusMessage!)}',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Close'),
+                child: Text(context.tr('close')),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Switch Google account'),
+                child: Text(context.tr('switch_account')),
               ),
             ],
           ),
@@ -281,11 +282,17 @@ class _CounterScreenState extends State<CounterScreen>
     }
   }
 
-  void _message(String message) {
+  void _message(AppMessage message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(
+        SnackBar(
+          content: Builder(
+            builder: (context) => Text(context.l10n.message(message)),
+          ),
+        ),
+      );
   }
 
   Future<void> _resetDialog() async {
@@ -294,7 +301,7 @@ class _CounterScreenState extends State<CounterScreen>
     final confirmed = await showGeneralDialog<bool>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Dismiss reset confirmation',
+      barrierLabel: context.tr('dismiss_reset'),
       barrierColor: hsl(220, 30, 5, .58),
       transitionDuration: const Duration(milliseconds: 180),
       transitionBuilder: (context, animation, secondary, child) =>
@@ -334,15 +341,14 @@ class _CounterScreenState extends State<CounterScreen>
                     ),
                     child: Semantics(
                       namesRoute: true,
-                      label: 'Reset all data?',
+                      label: context.tr('reset_question'),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Reset all data?',
+                            context.tr('reset_question'),
                             style: TextStyle(
-                              fontFamily: 'Amiri',
                               fontSize: 21.6,
                               height: 1.2,
                               color: TasbihTheme.gold,
@@ -351,8 +357,8 @@ class _CounterScreenState extends State<CounterScreen>
                           const SizedBox(height: 9.6),
                           Text(
                             cloud?.account != null
-                                ? 'Are you sure you want to reset everything? This will permanently delete your local counter progress and your Google Drive backup for the connected account. This action cannot be undone.'
-                                : 'Are you sure you want to reset everything? This will permanently delete your local counter progress and settings. This action cannot be undone.',
+                                ? context.tr('reset_cloud_explanation')
+                                : context.tr('reset_local_explanation'),
                             style: TextStyle(
                               color: TasbihTheme.muted,
                               fontSize: 12.8,
@@ -365,7 +371,7 @@ class _CounterScreenState extends State<CounterScreen>
                               Expanded(
                                 child: SettingsAction(
                                   key: const Key('reset-cancel'),
-                                  label: 'Cancel',
+                                  label: context.tr('cancel'),
                                   onPressed: () =>
                                       Navigator.pop(context, false),
                                 ),
@@ -374,7 +380,7 @@ class _CounterScreenState extends State<CounterScreen>
                               Expanded(
                                 child: SettingsAction(
                                   key: const Key('reset-confirm'),
-                                  label: 'Reset Everything',
+                                  label: context.tr('reset_everything'),
                                   danger: true,
                                   onPressed: () => Navigator.pop(context, true),
                                 ),
@@ -398,14 +404,14 @@ class _CounterScreenState extends State<CounterScreen>
       setState(() => _backupBusy = true);
       try {
         if (cloud != null) {
-          _message('Resetting data…');
+          _message(const AppMessage('resetting'));
           await _runCloud(cloud!.resetEverything);
         } else {
           await c.resetAll();
-          _message('Everything reset.');
+          _message(const AppMessage('reset_done'));
         }
       } catch (_) {
-        _message('Reset failed. Please retry.');
+        _message(const AppMessage('reset_failed'));
       } finally {
         if (mounted) setState(() => _backupBusy = false);
       }
@@ -485,11 +491,10 @@ class _CounterScreenState extends State<CounterScreen>
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
-                                                'بِسْمِ اللَّهِ',
+                                                context.tr('bismillah'),
                                                 textDirection:
                                                     TextDirection.rtl,
                                                 style: TextStyle(
-                                                  fontFamily: 'Amiri',
                                                   fontSize: 26.4,
                                                   height: 1.8,
                                                   fontWeight: FontWeight.bold,
@@ -499,7 +504,7 @@ class _CounterScreenState extends State<CounterScreen>
                                               ),
                                               const SizedBox(height: 3.2),
                                               Text(
-                                                'TASBIH COUNTER',
+                                                context.tr('app_heading'),
                                                 style: TextStyle(
                                                   fontSize: 10.24,
                                                   letterSpacing: 2.048,
@@ -543,8 +548,10 @@ class _CounterScreenState extends State<CounterScreen>
                                                   ),
                                                   const SizedBox(width: 8),
                                                   Semantics(
-                                                    label:
-                                                        'Streak: ${c.state.streak} days',
+                                                    label: context.tr(
+                                                      'streak',
+                                                      {'days': c.state.streak},
+                                                    ),
                                                     excludeSemantics: true,
                                                     child: Container(
                                                       width: badgeWidth,
@@ -633,7 +640,11 @@ class _CounterScreenState extends State<CounterScreen>
                                             14.4,
                                           ),
                                           child: Text(
-                                            '"${c.dua.meaning}"',
+                                            context.tr('quoted_meaning', {
+                                              'meaning': context.tr(
+                                                'meaning_${c.dua.id}',
+                                              ),
+                                            }),
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: TasbihTheme.muted,
@@ -649,8 +660,12 @@ class _CounterScreenState extends State<CounterScreen>
                                             ),
                                             child: Text(
                                               c.activePrayer == null
-                                                  ? 'Not available at this time'
-                                                  : '${c.config.prayer(c.activePrayer!).label} · Available now',
+                                                  ? context.tr('unavailable')
+                                                  : context.tr('active_prayer', {
+                                                      'prayer': context.tr(
+                                                        'prayer_${c.activePrayer!}',
+                                                      ),
+                                                    }),
                                               key: const Key('prayer-status'),
                                               style: TextStyle(
                                                 fontSize: 10.4,
@@ -680,7 +695,7 @@ class _CounterScreenState extends State<CounterScreen>
                               child: Padding(
                                 padding: const EdgeInsets.all(8),
                                 child: Text(
-                                  c.storageError!,
+                                  context.l10n.message(c.storageMessage!),
                                   style: TextStyle(
                                     color: TasbihTheme.danger,
                                     fontSize: 12,
@@ -732,7 +747,7 @@ class _CounterScreenState extends State<CounterScreen>
                           child: Semantics(
                             button: true,
                             expanded: _settingsOpen,
-                            label: 'Open settings',
+                            label: context.tr('open_settings'),
                             child: IconButton(
                               key: const Key('settings-toggle'),
                               onPressed: () {
@@ -741,7 +756,7 @@ class _CounterScreenState extends State<CounterScreen>
                                   _duaOpen = false;
                                 });
                               },
-                              tooltip: 'Settings',
+                              tooltip: context.tr('settings'),
                               style: IconButton.styleFrom(
                                 backgroundColor: hsl(220, 15, 18, .82),
                                 foregroundColor: TasbihTheme.muted,
@@ -779,8 +794,11 @@ class _CounterScreenState extends State<CounterScreen>
                                 backupBusy:
                                     _backupBusy || (cloud?.busy ?? false),
                                 backupLoading: cloud?.busy ?? false,
-                                backupStatus:
-                                    cloud?.message ?? cloud?.account?.email,
+                                backupStatus: cloud?.statusMessage != null
+                                    ? context.l10n.message(
+                                        cloud!.statusMessage!,
+                                      )
+                                    : cloud?.account?.email,
                               ),
                             ),
                           ),
@@ -837,20 +855,23 @@ class _CounterScreenState extends State<CounterScreen>
               ),
             ),
           Tooltip(
-            message: c.counterHint,
+            message: context.l10n.message(c.counterHintMessage),
             child: Semantics(
               button: true,
               liveRegion: true,
-              label: 'Tasbih counter',
+              label: context.tr('counter_semantics'),
               enabled: c.canCount,
               customSemanticsActions: (c.isCustom || !c.done)
                   ? {
-                      const CustomSemanticsAction(label: 'Reset counter'):
+                      CustomSemanticsAction(label: context.tr('reset_counter')):
                           c.resetCounter,
                     }
                   : null,
-              value: '${c.count} of ${c.target}',
-              hint: c.counterHint,
+              value: context.tr('counter_value', {
+                'count': c.count,
+                'target': c.target,
+              }),
+              hint: context.l10n.message(c.counterHintMessage),
               onTap: _count,
               child: FocusableActionDetector(
                 shortcuts: const {
@@ -892,7 +913,6 @@ class _CounterScreenState extends State<CounterScreen>
                           '${c.count}',
                           key: const Key('count-value'),
                           style: TextStyle(
-                            fontFamily: 'Amiri',
                             color: c.isCustom || c.canCount || c.done
                                 ? TasbihTheme.gold
                                 : TasbihTheme.muted,

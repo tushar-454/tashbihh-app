@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../features/counter/counter_controller.dart';
 import 'backup_service.dart';
+import '../localization/app_localizations.dart';
 import 'cloud_backup_format.dart';
 import 'cloud_ports.dart';
 
@@ -23,7 +24,8 @@ class CloudBackupCoordinator extends ChangeNotifier {
   String? _failedDailyReset;
   int? _failedCloseBackup;
   String? _failedStreakEarned;
-  String? message;
+  AppMessage? statusMessage;
+  String? get message => statusMessage?.english;
   Map<String, dynamic> get _metadata => controller.repository.cloudMetadata;
   CloudAccount? get account {
     final id = _metadata['accountId'], email = _metadata['email'];
@@ -38,8 +40,8 @@ class CloudBackupCoordinator extends ChangeNotifier {
   DateTime? get lastSuccessfulBackup =>
       DateTime.tryParse(_metadata['lastBackup'] as String? ?? '');
 
-  void _status(String value) {
-    message = value;
+  void _status(AppMessage value) {
+    statusMessage = value;
     if (!_disposed) notifyListeners();
   }
 
@@ -50,11 +52,9 @@ class CloudBackupCoordinator extends ChangeNotifier {
   }) async {
     if (busy || _disposed) {
       if (!_disposed) {
-        _status('Another cloud operation is in progress. Please retry.');
+        _status(const AppMessage('cloud_busy'));
       }
-      throw const BackupException(
-        'Another cloud operation is in progress. Please retry.',
-      );
+      throw const BackupException.localized('cloud_busy');
     }
     busy = true;
     controller.cloudLocked = lockData;
@@ -71,7 +71,9 @@ class CloudBackupCoordinator extends ChangeNotifier {
       _failedCloseBackup = _pendingCloseBackup;
       _failedStreakEarned = _pendingStreakEarned;
       _status(
-        error is BackupException ? error.message : 'Cloud operation failed. Local progress remains active. Check your connection and free device storage before retrying.',
+        error is BackupException
+            ? error.localizedMessage
+            : const AppMessage('cloud_failed'),
       );
       rethrow;
     } finally {
@@ -91,9 +93,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
       controller.clock(),
     );
     if (payload.length > BackupSerializer.maxBytes) {
-      throw const BackupException(
-        'Backup is too large. Local progress was kept.',
-      );
+      throw const BackupException.localized('backup_too_large_local');
     }
     return payload;
   }
@@ -109,25 +109,25 @@ class CloudBackupCoordinator extends ChangeNotifier {
 
   Future<void> connect() => _exclusive(() async {
     if (resetPending) {
-      throw const BackupException(
-        'Finish Reset Everything before connecting an account.',
-      );
+      throw const BackupException.localized('finish_reset');
     }
-    _status('Choose a Google account and allow private Drive backup access.');
+    _status(const AppMessage('choose_account'));
     final session = await auth.choose();
     try {
-      _status('Checking ${session.account.email} for a cloud backup…');
+      _status(AppMessage('checking_account', {'email': session.account.email}));
       final bytes = await session.drive.download();
       if (bytes != null) {
-        _status('Restoring cloud data…');
+        _status(const AppMessage('restoring_cloud'));
         final candidate = format.validate(bytes);
         await controller.commitCloud(
           backup: candidate,
           metadata: _connected(session.account),
         );
-        _status('Restore successful. Connected to ${session.account.email}.');
+        _status(
+          AppMessage('restore_connected', {'email': session.account.email}),
+        );
       } else {
-        _status('Creating first cloud backup…');
+        _status(const AppMessage('creating_backup'));
         final payload = _payload();
         await session.drive.upload(
           format.wrap(payload, controller.clock()),
@@ -136,7 +136,9 @@ class CloudBackupCoordinator extends ChangeNotifier {
         await controller.commitCloud(
           metadata: _connected(session.account, uploaded: true),
         );
-        _status('Backup successful. Connected to ${session.account.email}.');
+        _status(
+          AppMessage('backup_connected', {'email': session.account.email}),
+        );
       }
     } finally {
       session.drive.close();
@@ -148,9 +150,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
   Future<void> _backup({required bool interactive}) async {
     final selected = account;
     if (selected == null || resetPending) {
-      throw const BackupException(
-        'Connect Backup/Restore first, or finish the pending reset.',
-      );
+      throw const BackupException.localized('connect_first');
     }
     // Capture data and event revisions together before network awaits. A close
     // or streak change during this upload requires a fresh follow-up snapshot.
@@ -158,7 +158,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
     final dailyReset = _pendingDailyReset;
     final closeBackup = _pendingCloseBackup;
     final streakEarned = _pendingStreakEarned;
-    _status('Backing up current progress…');
+    _status(const AppMessage('backing_up'));
     final session = await auth.resume(selected, interactive: interactive);
     try {
       _verifyAccount(selected, session);
@@ -172,7 +172,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
         uploadedCloseBackup: closeBackup,
         uploadedStreakEarned: streakEarned,
       );
-      _status('Backup successful.');
+      _status(const AppMessage('backup_success'));
     } finally {
       session.drive.close();
     }
@@ -180,9 +180,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
 
   void _verifyAccount(CloudAccount selected, CloudSession session) {
     if (selected.id != session.account.id) {
-      throw const BackupException(
-        'Account changed. Use Switch Google account before syncing.',
-      );
+      throw const BackupException.localized('account_changed');
     }
   }
 
@@ -194,7 +192,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
       await controller.commitCloud(
         metadata: {..._metadata, 'resetPending': true},
       );
-      _status('Deleting the connected account’s Google Drive backup…');
+      _status(const AppMessage('deleting_backup'));
       final session = await auth.resume(selected, interactive: true);
       try {
         _verifyAccount(selected, session);
@@ -204,9 +202,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
       }
     }
     await controller.commitCloud(reset: true, metadata: {});
-    _status(
-      'Everything reset. Connect Backup/Restore to set up backups again.',
-    );
+    _status(const AppMessage('reset_disconnected'));
   }, lockData: true);
 
   Future<void> retryPending() {
@@ -258,9 +254,7 @@ class CloudBackupCoordinator extends ChangeNotifier {
     // Caller deliberately does not block counter startup on the network.
     unawaited(retryPending());
     if (resetPending) {
-      _status(
-        'Reset was interrupted. Retry Reset Everything to finish safely.',
-      );
+      _status(const AppMessage('reset_interrupted'));
     }
   }
 

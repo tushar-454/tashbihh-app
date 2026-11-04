@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/backup/cloud_backup_coordinator.dart';
 import 'core/backup/google_drive_backup.dart';
 import 'core/config/tasbih_config.dart';
@@ -32,6 +33,7 @@ Future<void> main() async {
       ], await rootBundle.loadString('assets/fonts/$family-LICENSE.txt'));
     }
   });
+  await AppLocalizations.load();
   final config = await TasbihConfig.load();
   final preferences = await SharedPreferences.getInstance();
   final android = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;

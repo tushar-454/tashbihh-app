@@ -43,9 +43,7 @@ class CloudBackupFormat {
     } on BackupException {
       rethrow;
     } catch (_) {
-      throw const BackupException(
-        'Cloud backup is corrupted or incompatible. Local progress was kept.',
-      );
+      throw const BackupException.localized('backup_corrupt');
     }
   }
 }

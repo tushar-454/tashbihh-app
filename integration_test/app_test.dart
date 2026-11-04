@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tashbihh/app/app.dart';
+import 'package:tashbihh/core/localization/app_localizations.dart';
 import 'package:tashbihh/core/config/tasbih_config.dart';
 import 'package:tashbihh/core/models/app_state.dart';
 import 'package:tashbihh/core/platform/platform_services.dart';
@@ -15,6 +16,7 @@ void main() {
   testWidgets(
     'native prayer, custom, fullscreen, disk restart and confirmed reset workflow',
     (tester) async {
+      await AppLocalizations.load();
       debugPrint('INTEGRATION: load config');
       final config = await TasbihConfig.load();
       debugPrint('INTEGRATION: load preferences');
@@ -70,6 +72,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.isCustom, isTrue);
       expect(controller.settings.style, CounterStyle.modern);
+      expect(controller.settings.language, 'en');
+      await tester.tap(find.byKey(const Key('language-bn')));
+      await tester.pumpAndSettle();
+      expect(controller.settings.language, 'bn');
+      expect(find.text('সেটিংস'), findsOneWidget);
+      expect(
+        Theme.of(tester.element(find.byKey(const Key('count-value'))))
+            .textTheme
+            .bodyMedium!
+            .fontFamily,
+        'KohinoorBangla',
+      );
+      if (capture) await binding.takeScreenshot('android-bangla-settings');
       await tester.tap(find.byKey(const Key('fullscreen-toggle')));
       await tester.pumpAndSettle();
       expect(device.fullscreen, isTrue);
@@ -109,6 +124,8 @@ void main() {
       expect(controller.isCustom, isTrue);
       expect(controller.count, 1);
       expect(controller.settings.style, CounterStyle.modern);
+      expect(controller.settings.language, 'bn');
+      expect(find.text('তাসবিহ কাউন্টার'), findsOneWidget);
       if (capture) {
         await Future<void>.delayed(const Duration(milliseconds: 800));
         await tester.pumpAndSettle(const Duration(milliseconds: 200));
@@ -139,6 +156,7 @@ void main() {
       expect(controller.isCustom, isFalse);
       expect(controller.count, 0);
       expect(controller.state.streak, 0);
+      expect(controller.settings.language, 'bn');
       debugPrint('INTEGRATION: mount app');
       await tester.pumpWidget(const SizedBox());
       controller.dispose();

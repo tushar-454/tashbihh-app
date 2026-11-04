@@ -293,4 +293,36 @@ class PrayerNotificationsTest {
         assertNull(intent.data)
         assertEquals(before, PrayerNotifications.readProgress(app))
     }
+    @Test fun `Bangla notification language survives reload and ignores device locale`() {
+        val saved = snapshot().put("settings", JSONObject().put("app_language", "bn"))
+        PrayerNotifications.writeProgress(app, saved.toString(), false, now = midnight)
+        val text = PrayerTranslations.forContext(app)
+        assertEquals("যোহর", text("prayer_dhuhr", emptyMap()))
+        assertEquals("Google Drive-এর কাজ ব্যর্থ হয়েছে (403)। আবার চেষ্টা করুন।", text("drive_http", mapOf("code" to 403)))
+        assertEquals(saved.toString(), PrayerNotifications.readProgress(app))
+        PrayerNotifications.reconcile(app, force = true, now = midnight)
+        val event = PrayerNotificationPolicy.events(listOf(
+            PrayerDay("2030-01-01", midnight, midnight + 1440 * minute,
+                listOf(PrayerWindow("dhuhr", midnight + 600 * minute, midnight + 800 * minute)),
+                midnight + 1200 * minute, midnight + 1440 * minute)
+        )).first()
+        val message = PrayerNotificationPolicy.message(event, event.at, emptyMap(), text)
+        assertTrue(message.title.contains("যোহর"))
+        assertTrue(message.body.contains("30"))
+        assertTrue(message.body.contains("সম্পন্ন"))
+    }
+
+    @Test fun `old or invalid language uses English even on Bangla device`() {
+        val previous = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale("bn", "BD"))
+            for (language in listOf(null, "xx", "", "en")) {
+                val settings = JSONObject()
+                if (language != null) settings.put("app_language", language)
+                PrayerNotifications.writeProgress(app, snapshot().put("settings", settings).toString(), false, now = midnight)
+                assertEquals("Dhuhr", PrayerTranslations.forContext(app)("prayer_dhuhr", emptyMap()))
+            }
+        } finally { java.util.Locale.setDefault(previous) }
+    }
+
 }

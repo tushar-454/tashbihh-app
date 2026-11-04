@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/config/tasbih_config.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/backup/backup_service.dart';
 import '../../core/models/app_state.dart';
 import '../../core/storage/progress_repository.dart';
@@ -42,7 +43,8 @@ class CounterController extends ChangeNotifier {
   bool cloudLocked = false;
   bool get dataLocked => restoring || cloudLocked;
   bool _clockRunning = false;
-  String? storageError;
+  AppMessage? storageMessage;
+  String? get storageError => storageMessage?.english;
   bool get isCustom => settings.mode == AppMode.custom;
   PrayerProgress get progress => state.prayers[state.selectedPrayer]!;
   Dhikr get dua => config
@@ -60,17 +62,20 @@ class CounterController extends ChangeNotifier {
       !dataLocked &&
       !done &&
       (isCustom || (schedule.eligible(state.selectedPrayer, now)));
-  String get counterHint {
+  String get counterHint => counterHintMessage.english;
+  AppMessage get counterHintMessage {
     if (done) {
       return isCustom
-          ? 'Target completed. Double tap to reset.'
-          : 'Target completed';
+          ? const AppMessage('hint_custom_done')
+          : const AppMessage('hint_done');
     }
-    if (isCustom) return 'Tap to count. Double tap to reset.';
+    if (isCustom) return const AppMessage('hint_custom');
     if (activePrayer != state.selectedPrayer) {
-      return 'Not available at this time · ${schedule.windowLabel(state.selectedPrayer)}';
+      return AppMessage('hint_unavailable', {
+        'window': schedule.windowMessage(state.selectedPrayer),
+      });
     }
-    return 'Available now. Tap to count. Double tap to reset incomplete progress.';
+    return const AppMessage('hint_available');
   }
 
   void stopClock() {
@@ -196,6 +201,14 @@ class CounterController extends ChangeNotifier {
     _changed();
   }
 
+  void setLanguage(String value) {
+    if (dataLocked) return;
+    final language = AppLocalizations.supportedLanguage(value);
+    if (settings.language == language) return;
+    settings.language = language;
+    _changed();
+  }
+
   void setIntensity(int value) {
     if (dataLocked) return;
     settings.vibrationIntensity = value.clamp(0, 100) ~/ 5 * 5;
@@ -261,7 +274,9 @@ class CounterController extends ChangeNotifier {
     Map<String, dynamic>? metadata,
     bool reset = false,
   }) async {
-    if (restoring) throw StateError('A restore is already running.');
+    if (restoring) {
+      throw StateError(const AppMessage('restore_running').english);
+    }
     restoring = true;
     notifyListeners();
     try {
@@ -270,17 +285,19 @@ class CounterController extends ChangeNotifier {
           ? AppState.empty(config, clock())
           : backup?.state(config) ?? state;
       final restoredSettings = reset
-          ? AppSettings()
+          ? AppSettings(language: settings.language)
           : backup?.settings ?? settings;
+      // Missing preferences in pre-localization backups preserve this device.
+      if (backup != null && !backup.hasLanguage) {
+        restoredSettings.language = settings.language;
+      }
       final committedMetadata = Map<String, dynamic>.of(
         metadata ?? repository.cloudMetadata,
       );
       final localNow = clock();
       if (backup != null || reset) {
         if (candidate.date.compareTo(dateKey(localNow)) > 0) {
-          throw const BackupException(
-            'Backup progress is dated in the future. Check the device date before restoring.',
-          );
+          throw const BackupException.localized('backup_future');
         }
         if (candidate.date != dateKey(localNow)) {
           candidate.restoredDay = {
@@ -324,7 +341,7 @@ class CounterController extends ChangeNotifier {
       state = candidate;
       settings = restoredSettings;
       now = localNow;
-      storageError = null;
+      storageMessage = null;
     } finally {
       restoring = false;
       if (!_disposed) {
@@ -372,12 +389,11 @@ class CounterController extends ChangeNotifier {
       try {
         await repository.saveProgress(snapshot);
         if (storageError != null) {
-          storageError = null;
+          storageMessage = null;
           if (!_disposed) notifyListeners();
         }
       } catch (_) {
-        storageError =
-            'Progress could not be saved. Please free device storage.';
+        storageMessage = const AppMessage('progress_save_failed');
         if (!_disposed) notifyListeners();
       }
     });

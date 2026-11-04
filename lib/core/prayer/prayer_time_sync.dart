@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../config/tasbih_config.dart';
+import '../localization/app_localizations.dart';
 import '../models/app_state.dart';
 import '../time/prayer_schedule.dart';
 import 'aladhan_client.dart';
@@ -33,7 +34,8 @@ class PrayerTimeSync extends ChangeNotifier {
   PrayerTimes? _cached;
   PrayerSchedule? _cachedSchedule;
   String? _deviceZone;
-  String? message;
+  AppMessage? statusMessage;
+  String? get message => statusMessage?.english;
   String? _observedDay;
   Future<void>? _inFlight;
   Timer? _retry;
@@ -65,10 +67,10 @@ class PrayerTimeSync extends ChangeNotifier {
       ? _cachedSchedule!
       : config.schedule;
 
-  String get _fallbackMessage =>
+  AppMessage get _fallbackMessage =>
       identical(scheduleFor(clock()), config.schedule)
-      ? 'Using configured prayer times.'
-      : 'Using saved prayer times from ${_cached!.date}.';
+      ? const AppMessage('using_configured')
+      : AppMessage('using_saved', {'date': _cached!.date});
 
   void resume(LocationExplanation explain) {
     if (_disposed) return;
@@ -146,9 +148,7 @@ class PrayerTimeSync extends ChangeNotifier {
       await location.authorize(_explain!, () => _foreground && !_disposed);
       if (!_foreground || _disposed) return;
       if (!await location.gateway.servicesEnabled()) {
-        throw const PrayerLocationException(
-          'Turn on device Location in Android Settings to get local prayer times.',
-        );
+        throw const PrayerLocationException.localized('location_enable');
       }
       if (!_foreground || _disposed) return;
       final coordinates = await location.gateway.currentPosition();
@@ -183,24 +183,29 @@ class PrayerTimeSync extends ChangeNotifier {
       _cachedSchedule = schedule.schedule(config);
       _failures = 0;
       _retry?.cancel();
-      message = null;
+      statusMessage = null;
       notifyListeners();
     } on PrayerLocationException catch (error) {
-      _setMessage('$_fallbackMessage ${error.message}');
+      _setMessage(
+        AppMessage('prayer_fallback_error', {
+          'fallback': _fallbackMessage,
+          'reason': error.localizedMessage,
+        }),
+      );
       // Denials/GPS disabled retry on foreground resume or a new date only.
     } catch (_) {
       if (!_disposed && _foreground) {
         _setMessage(
-          'Local prayer times are unavailable. $_fallbackMessage Automatic synchronization will retry later.',
+          AppMessage('prayer_sync_error', {'fallback': _fallbackMessage}),
         );
         _scheduleRetry();
       }
     }
   }
 
-  void _setMessage(String? value) {
-    if (_disposed || message == value) return;
-    message = value;
+  void _setMessage(AppMessage? value) {
+    if (_disposed || statusMessage == value) return;
+    statusMessage = value;
     notifyListeners();
   }
 

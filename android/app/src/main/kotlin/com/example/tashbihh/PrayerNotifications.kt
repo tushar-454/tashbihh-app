@@ -35,9 +35,10 @@ internal object PrayerNotifications {
     private fun alarms(context: Context) = context.getSystemService(AlarmManager::class.java)
 
     private fun ensureChannel(context: Context) {
+        val text = PrayerTranslations.forContext(context)
         if (Build.VERSION.SDK_INT >= 26) manager(context).createNotificationChannel(
-            NotificationChannel(CHANNEL, "Prayer goals and daily summary", NotificationManager.IMPORTANCE_DEFAULT).apply {
-                description = "Gentle tasbih goal reminders and your daily prayer summary"
+            NotificationChannel(CHANNEL, text("notification_channel", emptyMap()), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = text("notification_channel_description", emptyMap())
                 enableVibration(true)
                 lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             },
@@ -227,7 +228,7 @@ internal object PrayerNotifications {
         // Commit BEFORE posting: process death can lose a notification, but cannot
         // produce a duplicate on reboot/reschedule. Android has no atomic post+disk API.
         check(prefs(context).edit().putString(PREFIX + "consumed", consumed.toString()).commit())
-        val text = PrayerNotificationPolicy.message(event, now, values)
+        val text = PrayerNotificationPolicy.message(event, now, values, PrayerTranslations.forContext(context))
         val tap = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             // A unique action distinguishes PendingIntents without an Intent data

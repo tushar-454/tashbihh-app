@@ -29,12 +29,20 @@ class TasbihTheme {
     'maghrib': hsl(15, 70, 50, .22),
     'isha': hsl(240, 50, 50, .22),
   };
-  static ThemeData get data => ThemeData(
+  static const fallbackFonts = [
+    'KohinoorBangla',
+    'Comfortaa',
+    'Amiri',
+    'Tasbih Symbols',
+    'Tasbih Emoji',
+  ];
+  static ThemeData get data => forLanguage('en');
+  static ThemeData forLanguage(String language) => ThemeData(
     brightness: Brightness.dark,
     visualDensity: VisualDensity.standard,
     scaffoldBackgroundColor: background,
-    fontFamily: 'IBM Plex Sans Arabic',
-    fontFamilyFallback: const ['Tasbih Symbols', 'Tasbih Emoji'],
+    fontFamily: language == 'bn' ? 'KohinoorBangla' : 'Comfortaa',
+    fontFamilyFallback: fallbackFonts,
     colorScheme: ColorScheme.dark(
       primary: gold,
       secondary: accent,
@@ -56,7 +64,12 @@ class TasbihTheme {
       overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
     ),
     tooltipTheme: TooltipThemeData(
-      textStyle: TextStyle(color: foreground, fontSize: 12),
+      textStyle: TextStyle(
+        fontFamily: language == 'bn' ? 'KohinoorBangla' : 'Comfortaa',
+        fontFamilyFallback: fallbackFonts,
+        color: foreground,
+        fontSize: 12,
+      ),
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(8),

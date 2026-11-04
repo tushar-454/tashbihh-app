@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/localization/app_localizations.dart';
+
 import '../../app/theme/tasbih_theme.dart';
 import '../counter/counter_controller.dart';
 
@@ -19,7 +21,7 @@ class DuaSelector extends StatelessWidget {
     return Semantics(
       button: true,
       expanded: open,
-      label: 'Select a Dua',
+      label: context.tr('select_dua'),
       child: Material(
         color: TasbihTheme.soft,
         shape: RoundedRectangleBorder(
@@ -40,13 +42,12 @@ class DuaSelector extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        c.dua.arabic,
+                        context.tr('arabic_${c.dua.id}'),
                         textDirection: TextDirection.rtl,
                         textAlign: TextAlign.left,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontFamily: 'Amiri',
                           fontSize: 16,
                           height: 1.1,
                           color: TasbihTheme.gold,
@@ -54,7 +55,10 @@ class DuaSelector extends StatelessWidget {
                       ),
                       const SizedBox(height: 3.52),
                       Text(
-                        '${c.dua.transliteration} · ${c.target}x',
+                        context.tr('dua_selected', {
+                          'name': context.tr('dhikr_${c.dua.id}'),
+                          'target': c.target,
+                        }),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -90,7 +94,7 @@ class CompletionMark extends StatelessWidget {
   final bool done;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: done ? 'Completed' : 'Incomplete',
+    label: done ? context.tr('completed') : context.tr('incomplete'),
     child: Text(
       done ? '✓' : '✗',
       style: TextStyle(
@@ -160,11 +164,10 @@ class DuaMenu extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              dua.arabic,
+                              context.tr('arabic_${dua.id}'),
                               textDirection: TextDirection.rtl,
                               textAlign: TextAlign.left,
                               style: TextStyle(
-                                fontFamily: 'Amiri',
                                 fontSize: 16,
                                 color: TasbihTheme.gold,
                               ),
@@ -176,7 +179,10 @@ class DuaMenu extends StatelessWidget {
                       ),
                       const SizedBox(height: 2.4),
                       Text(
-                        '${dua.transliteration} - ${dua.meaning}',
+                        context.tr('dua_description', {
+                          'name': context.tr('dhikr_${dua.id}'),
+                          'meaning': context.tr('meaning_${dua.id}'),
+                        }),
                         style: TextStyle(
                           fontSize: 11.84,
                           color: TasbihTheme.muted,
@@ -184,7 +190,7 @@ class DuaMenu extends StatelessWidget {
                       ),
                       const SizedBox(height: 1.92),
                       Text(
-                        'Target: ${dua.target}x',
+                        context.tr('dua_target', {'target': dua.target}),
                         style: TextStyle(
                           fontSize: 10.72,
                           color: TasbihTheme.accent,

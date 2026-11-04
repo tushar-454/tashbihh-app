@@ -3,12 +3,18 @@ import 'package:geolocator_android/geolocator_android.dart';
 
 import '../storage/progress_repository.dart';
 import 'prayer_times.dart';
+import '../localization/app_localizations.dart';
 
 enum PrayerLocationAccess { granted, denied, permanentlyDenied }
 
 class PrayerLocationException implements Exception {
-  const PrayerLocationException(this.message);
-  final String message;
+  const PrayerLocationException(this._key) : _localized = false;
+  const PrayerLocationException.localized(this._key) : _localized = true;
+  final String _key;
+  final bool _localized;
+  AppMessage get localizedMessage =>
+      _localized ? AppMessage(_key) : AppMessage.raw(_key);
+  String get message => localizedMessage.english;
 }
 
 abstract class PrayerLocationGateway {
@@ -98,9 +104,7 @@ class PrayerLocation {
       }
     }
     if (permission != PrayerLocationAccess.granted) {
-      throw const PrayerLocationException(
-        'To enable location, open Android Settings → Apps → Tasbih Counter → Permissions → Location and allow access while using the app.',
-      );
+      throw const PrayerLocationException.localized('location_permission');
     }
   }
 }

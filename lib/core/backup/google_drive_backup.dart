@@ -30,9 +30,7 @@ class GoogleBackupAuth implements BackupAuth {
       authorization = await user.authorizationClient.authorizeScopes(scopes);
     }
     if (authorization == null) {
-      throw const BackupException(
-        'Google authorization expired. Tap Backup/Restore to authorize again.',
-      );
+      throw const BackupException.localized('auth_expired');
     }
     final token = authorization.accessToken;
     return CloudSession(
@@ -52,10 +50,11 @@ class GoogleBackupAuth implements BackupAuth {
       await _initialize();
       return await action();
     } on GoogleSignInException catch (e) {
-      throw BackupException(switch (e.code) {
-        GoogleSignInExceptionCode.canceled => 'Google account selection or permission was cancelled. Local progress was kept.',
-        GoogleSignInExceptionCode.clientConfigurationError => 'Google Sign-In configuration error. Check the Android signing certificate and OAuth client.',
-        _ => 'Google authentication or permission failed. Check your connection and try Backup/Restore again.',
+      throw BackupException.localized(switch (e.code) {
+        GoogleSignInExceptionCode.canceled => 'auth_canceled',
+        GoogleSignInExceptionCode.clientConfigurationError =>
+          'auth_configuration',
+        _ => 'auth_failed',
       });
     }
   }
@@ -82,9 +81,7 @@ class GoogleBackupAuth implements BackupAuth {
       user = await _signIn.authenticate(scopeHint: scopes);
     }
     if (user == null || user.id != account.id) {
-      throw const BackupException(
-        'Authenticate the connected Google account to continue. Use Switch Google account to change accounts.',
-      );
+      throw const BackupException.localized('auth_account');
     }
     _knownUsers[user.id] = user;
     return _authorize(user, interactive: interactive);
@@ -121,39 +118,29 @@ class GoogleBackupDrive implements BackupDrive {
       final bytes = <int>[];
       await for (final chunk in response.stream.timeout(timeout)) {
         if (bytes.length + chunk.length > CloudBackupFormat.maxBytes) {
-          throw const BackupException(
-            'Cloud backup is too large. Local progress was kept.',
-          );
+          throw const BackupException.localized('cloud_large');
         }
         bytes.addAll(chunk);
       }
       final result = http.Response.bytes(bytes, response.statusCode);
       if (result.statusCode == 401) {
         await onUnauthorized?.call();
-        throw const BackupException(
-          'Google authorization expired. Tap Backup/Restore to authorize again.',
-        );
+        throw const BackupException.localized('auth_expired');
       }
       if (result.statusCode == 403) {
-        throw const BackupException(
-          'Google Drive permission denied or quota exceeded. Allow private app-data access and retry.',
-        );
+        throw const BackupException.localized('drive_denied');
       }
       if (missingAllowed && result.statusCode == 404) return result;
       if (result.statusCode < 200 || result.statusCode >= 300) {
-        throw BackupException(
-          'Google Drive operation failed (${result.statusCode}). Please retry.',
-        );
+        throw BackupException.localized('drive_http', {
+          'code': result.statusCode,
+        });
       }
       return result;
     } on TimeoutException {
-      throw const BackupException(
-        'Network unavailable or timed out. Check your connection and retry.',
-      );
+      throw const BackupException.localized('network_timeout');
     } on http.ClientException {
-      throw const BackupException(
-        'Network unavailable. Check your internet connection and retry.',
-      );
+      throw const BackupException.localized('network_unavailable');
     }
   }
 
@@ -175,9 +162,7 @@ class GoogleBackupDrive implements BackupDrive {
       );
       final root = jsonDecode(response.body) as Map<String, dynamic>;
       if (root['incompleteSearch'] == true) {
-        throw const BackupException(
-          'Drive search was incomplete. Retry before creating or deleting a backup.',
-        );
+        throw const BackupException.localized('drive_search');
       }
       ids.addAll((root['files'] as List).map((f) => f['id'] as String));
       page = root['nextPageToken'] as String?;
@@ -203,14 +188,12 @@ class GoogleBackupDrive implements BackupDrive {
   @override
   Future<void> upload(List<int> bytes, {bool onlyIfMissing = false}) async {
     if (bytes.length > CloudBackupFormat.maxBytes) {
-      throw const BackupException('Backup exceeds the cloud size limit.');
+      throw const BackupException.localized('cloud_size_limit');
     }
     final ids = await _files();
     if (ids.isNotEmpty) {
       if (onlyIfMissing) {
-        throw const BackupException(
-          'A cloud backup appeared during connection. Retry to restore it safely.',
-        );
+        throw const BackupException.localized('backup_appeared');
       }
       await _request(
         'PATCH',
@@ -261,15 +244,11 @@ class GoogleBackupDrive implements BackupDrive {
         missingAllowed: true,
       );
       if (verification.statusCode != 404) {
-        throw const BackupException(
-          'Cloud deletion could not be verified. Local progress was kept.',
-        );
+        throw const BackupException.localized('delete_unverified');
       }
     }
     if ((await _files()).isNotEmpty) {
-      throw const BackupException(
-        'Cloud backup still exists. Retry Reset Everything. Local progress was kept.',
-      );
+      throw const BackupException.localized('delete_remaining');
     }
   }
 
