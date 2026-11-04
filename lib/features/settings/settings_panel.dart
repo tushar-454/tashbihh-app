@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/tasbih_theme.dart';
 import '../../core/models/app_state.dart';
+import '../../core/notifications/prayer_notifications.dart';
 import '../../core/platform/device_services.dart';
 import '../counter/counter_controller.dart';
 
@@ -15,12 +16,14 @@ class SettingsPanel extends StatelessWidget {
     this.backupStatus,
     this.backupBusy = false,
     this.backupLoading = false,
+    this.notifications,
   });
   final CounterController controller;
   final DeviceServices device;
   final VoidCallback onReset, onBackup;
   final String? backupStatus;
   final bool backupBusy, backupLoading;
+  final PrayerNotifications? notifications;
   @override
   Widget build(BuildContext context) {
     final c = controller;
@@ -119,6 +122,7 @@ class SettingsPanel extends StatelessWidget {
                   onPressed: device.toggleFullscreen,
                 ),
               ),
+              _group('Prayer Notifications', _notificationControls()),
               _group(
                 'Backup & Restore',
                 Column(
@@ -157,6 +161,38 @@ class SettingsPanel extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _notificationControls() {
+    final n = notifications;
+    if (n == null) return _label('Available in the Android app.');
+    return ListenableBuilder(
+      listenable: n,
+      builder: (context, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            label: 'Prayer Notifications',
+            child: Switch.adaptive(
+              key: const Key('prayer-notifications-toggle'),
+              value: n.enabled,
+              onChanged: n.busy ? null : (value) => n.setEnabled(value),
+            ),
+          ),
+          _label(n.status),
+          if (n.enabled && !n.allowed)
+            SettingsAction(
+              label: 'Android notification settings',
+              onPressed: () => n.openSettings(),
+            ),
+          if (n.enabled && n.allowed && !n.exact)
+            SettingsAction(
+              label: 'Allow precise reminders (optional)',
+              onPressed: () => n.openSettings(alarms: true),
+            ),
+        ],
       ),
     );
   }

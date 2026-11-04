@@ -10,6 +10,10 @@ abstract class SnapshotStore {
   Future<void> write(String value);
 }
 
+abstract class ReplacementSnapshotStore implements SnapshotStore {
+  Future<void> writeReplacement(String value);
+}
+
 class PreferencesStore implements SnapshotStore {
   PreferencesStore(this.preferences, {this.storageKey = key});
   final SharedPreferences preferences;
@@ -65,10 +69,18 @@ class ProgressRepository {
 
   /// One native preference key is the commit unit. Restore the prior snapshot
   /// on a reported failure (including the SharedPreferences in-memory cache).
-  Future<void> replace(String snapshot, String fallback) async {
+  Future<void> replace(
+    String snapshot,
+    String fallback, {
+    bool newProgress = false,
+  }) async {
     final previous = await store.read() ?? fallback;
     try {
-      await store.write(snapshot);
+      if (newProgress && store is ReplacementSnapshotStore) {
+        await (store as ReplacementSnapshotStore).writeReplacement(snapshot);
+      } else {
+        await store.write(snapshot);
+      }
     } catch (_) {
       try {
         await store.write(previous);

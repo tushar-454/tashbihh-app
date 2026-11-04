@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.tashbihh.PrayerNotificationPolicyTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-11-04T05:32:11.327Z" hostname="debian" time="0.124">
+  <properties/>
+  <testcase name="only incomplete active Isha receives an invitation" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.059"/>
+  <testcase name="zero one two remain eligible and three or more cancel both" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.015"/>
+  <testcase name="all six completion levels produce truthful respectful summaries" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.017"/>
+  <testcase name="five prayers are independent and decrease can restore future events" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.005"/>
+  <testcase name="delivery reads supplied latest progress and consumed ledger suppresses duplicates" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.001"/>
+  <testcase name="third completion before between and after offsets only cancels future" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.001"/>
+  <testcase name="summary plus three elapsed hours retains its source date after midnight" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.0"/>
+  <testcase name="expired and already due events are never newly scheduled" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.002"/>
+  <testcase name="late reminders describe actual remaining minutes and stale summary is dropped" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.012"/>
+  <testcase name="refreshed end replaces instant but preserves deterministic event identity" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.001"/>
+  <testcase name="short windows skip invalid offsets" classname="com.example.tashbihh.PrayerNotificationPolicyTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

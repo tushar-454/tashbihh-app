@@ -5,6 +5,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.Manifest
+import android.provider.Settings
+import android.net.Uri
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -15,6 +18,8 @@ import java.util.concurrent.Executors
 import java.util.TimeZone
 
 class MainActivity : FlutterActivity() {
+    private var notificationPermission: MethodChannel.Result? = null
+    private var notificationChannel: MethodChannel? = null
     private var pending: MethodChannel.Result? = null
     private var exportBytes: ByteArray? = null
     private val io = Executors.newSingleThreadExecutor()
@@ -28,6 +33,56 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        notificationChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tasbih/prayer_notifications").also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "requestPermission" -> {
+                        val status = PrayerNotifications.status(this)
+                        val firstRequest = !PrayerNotifications.hasPrompted(this) && status["enabled"] == true
+                        if (firstRequest) PrayerNotifications.markPrompted(this)
+                        if (Build.VERSION.SDK_INT >= 33 && status["enabled"] == true &&
+                            firstRequest && status["allowed"] != true) {
+                            try {
+                                notificationPermission = result
+                                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION)
+                            } catch (_: Exception) {
+                                notificationPermission = null
+                                result.error("permission", "Notification permission unavailable", null)
+                            }
+                        } else notificationWork(result) {
+                            PrayerNotifications.reconcile(this, force = true)
+                            PrayerNotifications.status(this)
+                        }
+                    }
+                    "status" -> notificationWork(result) {
+                        PrayerNotifications.reconcile(this, force = true)
+                        PrayerNotifications.status(this)
+                    }
+                    "readProgress" -> notificationWork(result) { PrayerNotifications.readProgress(this) }
+                    "writeProgress" -> notificationWork(result) {
+                        PrayerNotifications.writeProgress(this, call.argument<String>("value")!!, call.argument<Boolean>("replacement") == true)
+                        null
+                    }
+                    "configure" -> notificationWork(result) { PrayerNotifications.configure(this, call.arguments as String); null }
+                    "setEnabled" -> notificationWork(result) { PrayerNotifications.setEnabled(this, call.arguments == true); null }
+                    "takeTap" -> {
+                        val prayer = intent?.getStringExtra("prayerTap")
+                        intent?.removeExtra("prayerTap")
+                        result.success(prayer)
+                    }
+                    "settings", "alarmSettings" -> try {
+                        val settingsIntent = if (call.method == "alarmSettings" && Build.VERSION.SDK_INT >= 31)
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName"))
+                        else if (Build.VERSION.SDK_INT >= 26)
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                        else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+                        startActivity(settingsIntent)
+                        result.success(null)
+                    } catch (_: Exception) { result.error("settings", "Android settings unavailable", null) }
+                    else -> result.notImplemented()
+                }
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "tasbih/local_timezone")
             .setMethodCallHandler { call, result ->
                 if (call.method == "getTimeZone") result.success(TimeZone.getDefault().id)
@@ -64,6 +119,35 @@ class MainActivity : FlutterActivity() {
                 override fun onListen(arguments: Any?, events: EventChannel.EventSink?) { clockSink = events }
                 override fun onCancel(arguments: Any?) { clockSink = null }
             })
+    }
+
+    private fun notificationWork(result: MethodChannel.Result, work: () -> Any?) {
+        PrayerNotifications.executor.execute {
+            try {
+                val value = work()
+                runOnUiThread { result.success(value) }
+            } catch (_: Exception) {
+                runOnUiThread { result.error("notifications", "Could not update local notification state", null) }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.hasExtra("prayerTap")) notificationChannel?.invokeMethod("tapAvailable", null)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == NOTIFICATION_PERMISSION) {
+            val result = notificationPermission
+            notificationPermission = null
+            if (result != null) notificationWork(result) {
+                PrayerNotifications.reconcile(this, force = true)
+                PrayerNotifications.status(this)
+            }
+        }
     }
 
     override fun onStart() {
@@ -135,6 +219,9 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        notificationPermission?.error("interrupted", "Permission request interrupted", null)
+        notificationPermission = null
+        notificationChannel?.setMethodCallHandler(null)
         finishDocument(error = "Document operation interrupted. Please try again.")
         io.shutdown()
         super.onDestroy()
@@ -144,5 +231,6 @@ class MainActivity : FlutterActivity() {
         const val MAX_BYTES = 1024 * 1024
         const val SAVE_DOCUMENT = 7301
         const val OPEN_DOCUMENT = 7302
+        const val NOTIFICATION_PERMISSION = 7303
     }
 }

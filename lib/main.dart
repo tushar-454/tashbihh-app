@@ -9,6 +9,7 @@ import 'core/backup/google_drive_backup.dart';
 import 'core/config/tasbih_config.dart';
 import 'core/platform/platform_services.dart';
 import 'core/storage/progress_repository.dart';
+import 'core/notifications/prayer_notifications.dart';
 import 'core/prayer/aladhan_client.dart';
 import 'core/prayer/prayer_location.dart';
 import 'core/prayer/prayer_time_sync.dart';
@@ -33,7 +34,10 @@ Future<void> main() async {
   });
   final config = await TasbihConfig.load();
   final preferences = await SharedPreferences.getInstance();
-  final repository = ProgressRepository(PreferencesStore(preferences));
+  final android = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  final repository = ProgressRepository(
+    android ? AndroidProgressStore() : PreferencesStore(preferences),
+  );
   PrayerTimeSync? prayerTimes;
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     prayerTimes = PrayerTimeSync(
@@ -69,5 +73,12 @@ Future<void> main() async {
   final backup = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
       ? CloudBackupCoordinator(controller: controller, auth: GoogleBackupAuth())
       : null;
-  runApp(TasbihApp(controller: controller, device: device, backup: backup));
+  runApp(
+    TasbihApp(
+      controller: controller,
+      device: device,
+      backup: backup,
+      notifications: android ? PrayerNotifications() : null,
+    ),
+  );
 }

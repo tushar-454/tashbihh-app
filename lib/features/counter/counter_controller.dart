@@ -318,6 +318,7 @@ class CounterController extends ChangeNotifier {
           cloud: committedMetadata,
         ),
         repository.encode(state, settings),
+        newProgress: backup != null || reset,
       );
       repository.cloudMetadata = committedMetadata;
       state = candidate;

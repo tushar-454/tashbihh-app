@@ -1,0 +1,11 @@
+Generating 2048-bit RSA key pair and self-signed certificate (SHA384withRSA) with a validity of 30 days
+	for: CN=Tashbihh Local Validation Only
+Running Gradle task 'assembleRelease'...                        
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/tushar/.gradle/wrapper/dists/gradle-9.3.1-all/9ot9r568e8zfvvd4mn8rbu1j0/gradle-9.3.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 1508 bytes (99.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Running Gradle task 'assembleRelease'...                          185.4s
+✓ Built build/app/outputs/flutter-apk/app-release.apk (54.9MB)

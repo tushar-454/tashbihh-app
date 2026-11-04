@@ -11,6 +11,8 @@ import 'package:flutter/semantics.dart';
 
 import '../../app/theme/tasbih_theme.dart';
 import '../../core/models/app_state.dart';
+import '../../core/notifications/prayer_notifications.dart';
+import '../../core/prayer/prayer_location.dart';
 import '../../core/platform/device_services.dart';
 import '../../core/widgets/panel_enter.dart';
 import '../dhikr/dua_selector.dart';
@@ -25,10 +27,12 @@ class CounterScreen extends StatefulWidget {
     required this.controller,
     required this.device,
     this.backup,
+    this.notifications,
   });
   final CounterController controller;
   final DeviceServices device;
   final CloudBackupCoordinator? backup;
+  final PrayerNotifications? notifications;
   @override
   State<CounterScreen> createState() => _CounterScreenState();
 }
@@ -45,6 +49,9 @@ class _CounterScreenState extends State<CounterScreen>
   CounterController get c => widget.controller;
   int _lastCount = 0;
   String? _lastPrayerMessage;
+  String? _notificationSchedule;
+  Future<void> _notificationUpdates = Future.value();
+  PrayerNotifications? get notifications => widget.notifications;
   @override
   void initState() {
     super.initState();
@@ -56,12 +63,18 @@ class _CounterScreenState extends State<CounterScreen>
     c.addListener(_changed);
     cloud?.addListener(_cloudChanged);
     widget.device.addListener(_deviceChanged);
+    notifications?.addListener(_deviceChanged);
+    notifications?.onTapAvailable = _notificationTap;
     WidgetsBinding.instance.addObserver(this);
     c.startClock();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final lifecycle = WidgetsBinding.instance.lifecycleState;
       if (mounted &&
           (lifecycle == null || lifecycle == AppLifecycleState.resumed)) {
+        await _syncNotifications();
+        await notifications?.refresh(requestPermission: true);
+        if (!mounted) return;
+        await _notificationTap();
         c.prayerTimes?.resume(_explainLocation);
         cloud?.resume();
       }
@@ -69,7 +82,41 @@ class _CounterScreenState extends State<CounterScreen>
     _clockEvents = widget.device.clockChanges.listen((_) {
       c.prayerTimes?.clockChanged();
       c.refresh();
+      unawaited(_syncNotifications());
     }, onError: (Object _) {});
+  }
+
+  Future<void> _notificationTap() async {
+    final prayer = await notifications?.takeTap();
+    if (!mounted || prayer == null) return;
+    _close();
+    c.refresh();
+    if (prayer != 'summary') c.selectPrayer(prayer);
+  }
+
+  Future<void> _syncNotifications() {
+    if (notifications == null || !mounted) return Future.value();
+    // Queue schedule changes so a slow timezone lookup cannot overwrite a newer
+    // schedule. Counts are committed/reconciled by AndroidProgressStore directly.
+    _notificationUpdates = _notificationUpdates.then((_) async {
+      if (!mounted) return;
+      try {
+        final zone = await AndroidPrayerLocation.timeZoneId();
+        if (!mounted) return;
+        await notifications!.configure(
+          NotificationPlan.build(
+            now: c.clock(),
+            zone: zone,
+            config: c.config,
+            scheduleFor: (now) =>
+                c.prayerTimes?.scheduleFor(now) ?? c.config.schedule,
+          ),
+        );
+      } catch (_) {
+        // Keep the last valid native plan if the timezone bridge is unavailable.
+      }
+    });
+    return _notificationUpdates;
   }
 
   void _changed() {
@@ -87,6 +134,12 @@ class _CounterScreenState extends State<CounterScreen>
       });
     }
     _lastPrayerMessage = message;
+    final signature =
+        '${c.state.date}|${c.now.timeZoneOffset}|${c.schedule.prayers.map((p) => '${p.id}:${p.start}:${c.schedule.endOf(p)}').join(',')}|${c.schedule.earlyIshaEnd}';
+    if (_notificationSchedule != signature) {
+      _notificationSchedule = signature;
+      unawaited(_syncNotifications());
+    }
     setState(() {});
   }
 
@@ -125,6 +178,9 @@ class _CounterScreenState extends State<CounterScreen>
       c.startClock();
       cloud?.resume();
       c.prayerTimes?.resume(_explainLocation);
+      unawaited(_syncNotifications());
+      unawaited(notifications?.refresh() ?? Future.value());
+      unawaited(_notificationTap());
     } else {
       c.stopClock();
       if (state == AppLifecycleState.hidden ||
@@ -148,6 +204,8 @@ class _CounterScreenState extends State<CounterScreen>
     cloud?.removeListener(_cloudChanged);
     cloud?.suspend(backupOnClose: false);
     widget.device.removeListener(_deviceChanged);
+    notifications?.removeListener(_deviceChanged);
+    notifications?.onTapAvailable = null;
     _pulse.dispose();
     super.dispose();
   }
@@ -715,6 +773,7 @@ class _CounterScreenState extends State<CounterScreen>
                               child: SettingsPanel(
                                 controller: c,
                                 device: widget.device,
+                                notifications: notifications,
                                 onReset: _resetDialog,
                                 onBackup: _backup,
                                 backupBusy:

@@ -1,0 +1,18 @@
+Temporary local validation certificate; not production-signed.
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): false
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Tashbihh Local Validation Only
+Signer #1 certificate SHA-256 digest: 069b9944d09248ebd61f6ba76dc5e1f43d8a9005f7400b85d040774afeccf300
+Signer #1 certificate SHA-1 digest: f43c46fdc2da3bd721692094787fd223ae5f810c
+Signer #1 certificate MD5 digest: dffcdd4fbf1b0005a5df133f361f6f64
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 2048
+Signer #1 public key SHA-256 digest: a34c02672e19664a9bf5fe6cdf5ee8d244d292030efb1538321b34e2586a8b8a
+Signer #1 public key SHA-1 digest: f9f121daf8fe371c56885a732c9bfd18e82b1a63
+Signer #1 public key MD5 digest: f7dcba927ffc5a0094064f1fce45bb1c
